@@ -1,0 +1,65 @@
+{
+  "name": "tuzzle",
+  "version": "0.1.0",
+  "description": "Type-safe HTTP client for TypeScript inspired by Guzzle.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "pnpm clean && pnpm build:bundle && pnpm build:types",
+    "build:bundle": "vite build",
+    "build:types": "tsc --project tsconfig.json --emitDeclarationOnly",
+    "dev": "vite dev --host",
+    "preview": "vite preview --host",
+    "type-check": "tsc --noEmit --project tsconfig.json",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepare": "husky install"
+  },
+  "keywords": [
+    "http",
+    "client",
+    "typescript",
+    "middleware"
+  ],
+  "author": "lihs",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "@types/node": "^22.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
+    "eslint": "^9.37.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.2.1",
+    "globals": "^15.12.0",
+    "husky": "^9.1.7",
+    "rimraf": "^5.0.7",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.46.1",
+    "vite": "^5.4.10",
+    "vitest": "^3.2.4"
+  }
+}
