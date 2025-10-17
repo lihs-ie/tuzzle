@@ -97,7 +97,7 @@ describe('Client Integration Tests', () => {
 
     // 複数のリクエストを順次実行
     const response1 = await client.get('/users');
-    const response2 = await client.post('/users', { body: { name: 'John' } });
+    const response2 = await client.post('/users', { json: { name: 'John' } });
     const response3 = await client.get('/users/1');
 
     expect(response1.statusCode).toBe(200);
@@ -167,9 +167,9 @@ describe('Client Integration Tests', () => {
     mockFetch.mockResolvedValue(createMockResponse(200, 'OK', {}, ''));
 
     await client.get('/resource');
-    await client.post('/resource', { body: {} });
-    await client.put('/resource/1', { body: {} });
-    await client.patch('/resource/1', { body: {} });
+    await client.post('/resource', { json: {} });
+    await client.put('/resource/1', { json: {} });
+    await client.patch('/resource/1', { json: {} });
     await client.delete('/resource/1');
     await client.head('/resource');
     await client.options('/resource');

@@ -65,7 +65,7 @@ const mergeOptions = (
     ...requestOptions,
     headers: {
       ...(clientConfig.headers ?? {}),
-      ...(requestOptions.headers as HttpHeaders | undefined),
+      ...(requestOptions.headers ?? {}),
     },
   };
 };
@@ -130,7 +130,7 @@ export const HttpClient = (
     const mergedOptions = mergeOptions(clientConfig, options);
 
     const httpRequest: HttpRequest = createHttpRequest(method, fullUri, {
-      headers: mergedOptions.headers as HttpHeaders,
+      headers: mergedOptions.headers ?? {},
       body: null,
     });
 

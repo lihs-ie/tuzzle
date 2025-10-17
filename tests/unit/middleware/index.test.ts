@@ -133,7 +133,7 @@ describe('tap', () => {
 
     const wrappedHandler = middleware(handler);
     const request = createMockRequest();
-    const options = { testOption: 'value' };
+    const options = { timeout: 5000 };
 
     await wrappedHandler(request, options);
 
@@ -148,7 +148,7 @@ describe('tap', () => {
 
     const wrappedHandler = middleware(handler);
     const request = createMockRequest();
-    const options = { testOption: 'value' };
+    const options = { timeout: 5000 };
 
     await wrappedHandler(request, options);
 

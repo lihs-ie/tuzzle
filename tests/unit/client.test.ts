@@ -122,7 +122,7 @@ describe('HttpClient', () => {
       mockFetch.mockResolvedValue(createMockResponse(201, 'Created', {}, ''));
 
       const response = await client.post('https://api.example.com/users', {
-        body: { name: 'John' },
+        json: { name: 'John' },
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -142,7 +142,7 @@ describe('HttpClient', () => {
       mockFetch.mockResolvedValue(createMockResponse(200, 'OK', {}, ''));
 
       await client.put('https://api.example.com/users/1', {
-        body: { name: 'Jane' },
+        json: { name: 'Jane' },
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -178,7 +178,7 @@ describe('HttpClient', () => {
       mockFetch.mockResolvedValue(createMockResponse(200, 'OK', {}, ''));
 
       await client.patch('https://api.example.com/users/1', {
-        body: { email: 'new@example.com' },
+        json: { email: 'new@example.com' },
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
