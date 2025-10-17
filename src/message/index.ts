@@ -17,12 +17,17 @@ export {
 
 // Stream
 export type { HttpBodyStream } from './stream';
-export { HttpBodyStream, streamToString, getSize, isReadable } from './stream';
+export {
+  HttpBodyStream as createHttpBodyStream,
+  streamToString,
+  getSize,
+  isReadable,
+} from './stream';
 
 // Request
 export type { HttpRequest } from './request';
 export {
-  HttpRequest,
+  HttpRequest as createHttpRequest,
   withMethod,
   withUri,
   withHeader as withRequestHeader,
@@ -36,7 +41,7 @@ export {
 // Response
 export type { HttpResponse } from './response';
 export {
-  HttpResponse,
+  HttpResponse as createHttpResponse,
   withStatus,
   withHeader as withResponseHeader,
   withoutHeader as withoutResponseHeader,
