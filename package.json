@@ -21,7 +21,7 @@
     "clean": "rimraf dist",
     "build": "pnpm clean && pnpm build:bundle && pnpm build:types",
     "build:bundle": "vite build",
-    "build:types": "tsc --project tsconfig.json --emitDeclarationOnly",
+    "build:types": "tsc --project tsconfig.build.json --emitDeclarationOnly",
     "dev": "vite dev --host",
     "preview": "vite preview --host",
     "type-check": "tsc --noEmit --project tsconfig.json",
