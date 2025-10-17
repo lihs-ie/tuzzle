@@ -5,6 +5,7 @@
 import type { HttpRequest } from '../message/request';
 import type { HttpResponse } from '../message/response';
 import type { HttpHeaders } from '../message/headers';
+import type { CookieJar } from '../cookie/jar.js';
 
 const ERROR_NO_HANDLER = 'No handler has been set';
 
@@ -47,11 +48,6 @@ export type ProxyConfig = {
   readonly https?: string;
   readonly no?: readonly string[];
 };
-
-/**
- * Cookie Jar の型（将来実装）
- */
-export type CookieJar = Record<string, never>;
 
 /**
  * リクエストオプションの型
