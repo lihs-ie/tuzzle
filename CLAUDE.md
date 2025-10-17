@@ -270,6 +270,7 @@ const withHeader = (request: HttpRequest, key: string, value: string): HttpReque
 - **明確で意図の伝わる命名:** 変数名や関数名は、その目的と意図が明確に伝わるように命名する。
 - **ガード節 / 早期リターン:** 深くネストした`if-else`構造を避け、早期リターンを積極的に利用する。
 - **セキュリティ第一:** ユーザーからの入力は常に信頼しないこと。一般的な脆弱性（XSS、SQL インジェクション等）を防ぐため、入力のサニタイズと出力のエンコードを徹底する。
+- **ESLint 無視の禁止:** `eslint-disable`、`eslint-disable-line`、`eslint-disable-next-line` などの ESLint ルール無視ディレクティブは絶対に使用してはならない。ESLint の警告やエラーは、コードを修正して解決すること。
 
 ## 必須環境
 
