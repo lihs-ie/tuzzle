@@ -16,10 +16,10 @@ describe('機能名', () => {
   it('期待動作を明記', () => {
     // Arrange: テストデータの準備
     const input = createTestInput();
-    
+
     // Act: テスト対象の実行
     const result = targetFunction(input);
-    
+
     // Assert: 結果の検証
     expect(result).toBe(expected);
   });

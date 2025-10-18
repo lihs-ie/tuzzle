@@ -44,10 +44,12 @@ references/guzzle/        # GuzzleHTTP リファレンス
 ```
 
 ## ディレクトリ命名規則
+
 - ディレクトリ名は複数形で機能領域を表現 (`handler/`, `middleware/`, `exception/`)
 - 各ディレクトリに `index.ts` で再エクスポートを提供
 
 ## 重要ファイル
+
 - `src/handler/stack.ts` - RequestOptions型定義（50+のオプション）、ハンドラースタック管理
 - `src/client.ts` - HttpClient実装、mergeOptions関数
 - `src/cookie/set.ts` - SetCookieパーサー（RFC 6265準拠）

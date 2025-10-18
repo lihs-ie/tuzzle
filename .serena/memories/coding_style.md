@@ -5,6 +5,7 @@
 ### 関数型プログラミング原則（厳守）
 
 #### クラスの使用禁止
+
 すべてを関数と型定義で実装すること。
 
 ```typescript
@@ -29,11 +30,13 @@ const withHeader = (request: HttpRequest, key: string, value: string): HttpReque
 ```
 
 #### Immutable 実装
+
 - すべてのデータ構造を不変にし、更新は新しいオブジェクトを返すこと
 - オブジェクトの更新は `{ ...obj, newProp: value }` で実現
 - 配列の更新は `[...arr, newItem]` や `arr.filter(...)` で実現
 
 #### 関数型アプローチ
+
 - 純粋関数を優先 (副作用を最小限に)
 - パイプライン処理やコンポジションを活用
 - `map`, `filter`, `reduce` などの高階関数を使用
@@ -50,6 +53,7 @@ const withHeader = (request: HttpRequest, key: string, value: string): HttpReque
 ## ハードコードの絶対禁止
 
 ### マジックナンバー禁止
+
 ```typescript
 // NG
 if (age > 20)
@@ -60,9 +64,11 @@ if (age > ADULT_AGE)
 ```
 
 ### 設定値の外部化
+
 API キー、URL、ファイルパスは設定ファイルや環境変数から読み込むこと。
 
 ## ESLint 無視の禁止
+
 `eslint-disable`、`eslint-disable-line`、`eslint-disable-next-line` の使用は絶対禁止。
 ESLint警告はコードを修正して解決すること。
 
