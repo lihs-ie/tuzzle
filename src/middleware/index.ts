@@ -7,6 +7,9 @@ import type { HttpRequest } from '../message/request';
 import type { HttpResponse } from '../message/response';
 import type { Handler, Middleware, RequestOptions } from '../handler/stack';
 
+// HTTPエラーミドルウェア
+export { httpErrors } from './http-errors.js';
+
 /**
  * リクエスト送信前に実行されるコールバック関数の型
  */
