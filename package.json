@@ -15,13 +15,28 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lihs/tuzzle.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lihs/tuzzle/issues"
+  },
+  "homepage": "https://github.com/lihs/tuzzle#readme",
   "scripts": {
     "clean": "rimraf dist",
-    "build": "pnpm clean && pnpm build:bundle && pnpm build:types",
+    "build": "pnpm clean && pnpm build:bundle && pnpm build:types && pnpm build:api",
     "build:bundle": "vite build",
     "build:types": "tsc --project tsconfig.build.json --emitDeclarationOnly",
+    "build:api": "api-extractor run --local --verbose && pnpm clean:temp-types",
+    "clean:temp-types": "find dist -type f \\( -name '*.d.ts' ! -name 'index.d.ts' -o -name '*.d.ts.map' ! -name 'index.d.ts.map' \\) -delete && find dist -mindepth 1 -type d -exec rm -rf {} + 2>/dev/null || true",
     "dev": "vite dev --host",
     "preview": "vite preview --host",
     "type-check": "tsc --noEmit --project tsconfig.json",
@@ -31,13 +46,23 @@
     "format:write": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "prepublishOnly": "pnpm type-check && pnpm test && pnpm lint && pnpm build",
+    "pack": "pnpm build && npm pack"
   },
   "keywords": [
     "http",
     "client",
     "typescript",
-    "middleware"
+    "middleware",
+    "guzzle",
+    "fetch",
+    "request",
+    "rest",
+    "api",
+    "http-client",
+    "type-safe",
+    "promise"
   ],
   "author": "lihs",
   "license": "MIT",
@@ -47,6 +72,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",
+    "@microsoft/api-extractor": "^7.53.1",
     "@types/node": "^22.10.1",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
@@ -55,8 +81,8 @@
     "eslint-plugin-prettier": "^5.2.1",
     "globals": "^15.12.0",
     "husky": "^9.1.7",
-    "rimraf": "^5.0.7",
     "prettier": "^3.6.2",
+    "rimraf": "^5.0.7",
     "typescript": "^5.9.0",
     "typescript-eslint": "^8.46.1",
     "vite": "^5.4.10",

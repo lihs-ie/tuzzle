@@ -1,8 +1,9 @@
 import { describe, it } from 'vitest';
 import { expectTypeOf } from 'vitest';
 import type { RequestOptions, MultipartItem, TransferStats } from '../../src/handler/stack';
-import type { HttpRequest } from '../../src/message/request';
-import type { HttpResponse } from '../../src/message/response';
+import { HttpRequest } from '../../src/message/request';
+import { HttpResponse } from '../../src/message/response';
+import { Method } from '../../src/method';
 
 describe('RequestOptions型', () => {
   it('should accept all valid option types', () => {
@@ -182,21 +183,11 @@ describe('MultipartItem型', () => {
 
 describe('TransferStats型', () => {
   it('should accept transfer stats structure', () => {
-    const dummyRequest: HttpRequest = {
-      method: 'GET',
-      uri: 'https://example.com',
-      headers: {},
-      body: null,
-      version: '1.1',
-    };
+    const dummyRequest = HttpRequest(Method.GET, 'https://example.com');
 
-    const dummyResponse: HttpResponse = {
-      statusCode: 200,
+    const dummyResponse = HttpResponse(200, {
       reasonPhrase: 'OK',
-      headers: {},
-      body: null,
-      version: '1.1',
-    };
+    });
 
     const stats: TransferStats = {
       request: dummyRequest,

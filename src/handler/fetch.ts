@@ -6,6 +6,7 @@ import type { HttpRequest } from '../message/request';
 import type { HttpResponse } from '../message/response';
 import { HttpBodyStream } from '../message/stream';
 import { HttpResponse as createHttpResponse } from '../message/response';
+import { HttpHeaders } from '../message/headers';
 import type { Handler, RequestOptions } from './stack';
 
 /**
@@ -15,9 +16,9 @@ import type { Handler, RequestOptions } from './stack';
  * @returns HttpResponse オブジェクト
  */
 const convertFetchResponse = async (response: Response): Promise<HttpResponse> => {
-  const headers: Record<string, string> = {};
+  const headersRecord: Record<string, string> = {};
   response.headers.forEach((value, key) => {
-    headers[key] = value;
+    headersRecord[key] = value;
   });
 
   const bodyText = await response.text();
@@ -25,7 +26,7 @@ const convertFetchResponse = async (response: Response): Promise<HttpResponse> =
 
   return createHttpResponse(response.status, {
     reasonPhrase: response.statusText,
-    headers,
+    headers: HttpHeaders(headersRecord),
     body,
   });
 };
@@ -45,7 +46,7 @@ export const FetchHandler = (): Handler => {
   return async (request: HttpRequest, options: RequestOptions): Promise<HttpResponse> => {
     const fetchOptions: RequestInit = {
       method: request.method,
-      headers: request.headers as HeadersInit,
+      headers: request.headers.data as HeadersInit,
       body: request.body?.content !== undefined ? (request.body.content as BodyInit) : null,
     };
 

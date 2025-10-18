@@ -6,16 +6,19 @@
 import type { SetCookie } from './set.js';
 import { isExpired, matchesDomain, matchesPath, parseSetCookie, validateSetCookie } from './set.js';
 import type { HttpRequest, HttpResponse } from '../message/index.js';
-import { withHeader } from '../message/request.js';
-import { getHeader as getHeaderFromResponse } from '../message/response.js';
 
 /**
  * CookieJar - Cookieの集合を管理する型
  */
-export type CookieJar = {
+export interface CookieJar {
   readonly cookies: readonly SetCookie[];
   readonly strictMode: boolean;
-};
+  readonly add: (cookie: SetCookie) => CookieJar;
+  readonly remove: (domain: string | null, path: string | null, name: string | null) => CookieJar;
+  readonly getForRequest: (uri: string, isSecure: boolean) => readonly SetCookie[];
+  readonly extractFromResponse: (request: HttpRequest, response: HttpResponse) => CookieJar;
+  readonly addCookieHeaderToRequest: (request: HttpRequest) => HttpRequest;
+}
 
 /**
  * 新しいCookieJarを生成します
@@ -37,206 +40,116 @@ export const CookieJar = (options?: {
 }): CookieJar => ({
   cookies: options?.cookies ?? [],
   strictMode: options?.strictMode ?? false,
-});
-
-/**
- * CookieをCookieJarに追加します。同じ name/domain/path のCookieがあれば上書きします
- *
- * @param jar - CookieJar
- * @param cookie - 追加するSetCookie
- * @returns 更新されたCookieJar
- * @throws strictModeでCookieが無効な場合にエラーをスロー
- *
- * @example
- * ```typescript
- * const jar = CookieJar();
- * const cookie: SetCookie = { name: 'sessionId', value: 'abc123', domain: 'example.com', ... };
- * const updatedJar = addCookie(jar, cookie);
- * ```
- */
-export const addCookie = (jar: CookieJar, cookie: SetCookie): CookieJar => {
-  const validationResult = validateSetCookie(cookie);
-  if (validationResult !== true) {
-    if (jar.strictMode) {
-      throw new Error(`Invalid cookie: ${validationResult}`);
+  add(cookie: SetCookie): CookieJar {
+    const validationResult = validateSetCookie(cookie);
+    if (validationResult !== true) {
+      if (this.strictMode) {
+        throw new Error(`Invalid cookie: ${validationResult}`);
+      }
+      return this.remove(cookie.domain, cookie.path, cookie.name);
     }
-    return removeCookie(jar, cookie.domain, cookie.path, cookie.name);
-  }
 
-  const existingIndex = jar.cookies.findIndex(
-    (c) => c.name === cookie.name && c.domain === cookie.domain && c.path === cookie.path,
-  );
+    const existingIndex = this.cookies.findIndex(
+      (c) => c.name === cookie.name && c.domain === cookie.domain && c.path === cookie.path,
+    );
 
-  if (existingIndex === -1) {
+    if (existingIndex === -1) {
+      return {
+        ...this,
+        cookies: [...this.cookies, cookie],
+      };
+    }
+
+    const newCookies = [...this.cookies];
+    newCookies[existingIndex] = cookie;
+
     return {
-      ...jar,
-      cookies: [...jar.cookies, cookie],
+      ...this,
+      cookies: newCookies,
     };
-  }
+  },
+  remove(domain: string | null, path: string | null, name: string | null): CookieJar {
+    let filtered = this.cookies;
 
-  const newCookies = [...jar.cookies];
-  newCookies[existingIndex] = cookie;
-
-  return {
-    ...jar,
-    cookies: newCookies,
-  };
-};
-
-/**
- * 指定した条件にマッチするCookieを削除します
- *
- * @param jar - CookieJar
- * @param domain - ドメイン（null の場合はフィルタリングしない）
- * @param path - パス（null の場合はフィルタリングしない）
- * @param name - Cookie名（null の場合はフィルタリングしない）
- * @returns 更新されたCookieJar
- *
- * @example
- * ```typescript
- * const jar = CookieJar({ cookies: [...] });
- * const updatedJar = removeCookie(jar, 'example.com', '/', 'sessionId');
- * ```
- */
-export const removeCookie = (
-  jar: CookieJar,
-  domain: string | null,
-  path: string | null,
-  name: string | null,
-): CookieJar => {
-  let filtered = jar.cookies;
-
-  if (domain) {
-    filtered = filtered.filter((c) => c.domain !== domain);
-  }
-
-  if (path) {
-    filtered = filtered.filter((c) => c.path !== path);
-  }
-
-  if (name) {
-    filtered = filtered.filter((c) => c.name !== name);
-  }
-
-  return {
-    ...jar,
-    cookies: filtered,
-  };
-};
-
-/**
- * リクエストURIにマッチする有効なCookieを取得します
- *
- * @param jar - CookieJar
- * @param uri - リクエストURI
- * @param isSecure - HTTPSリクエストかどうか
- * @returns マッチするCookieの配列
- *
- * @example
- * ```typescript
- * const jar = CookieJar({ cookies: [...] });
- * const cookies = getCookiesForRequest(jar, 'https://example.com/api', true);
- * ```
- */
-export const getCookiesForRequest = (
-  jar: CookieJar,
-  uri: string,
-  isSecure: boolean,
-): readonly SetCookie[] => {
-  const url = new URL(uri);
-  const domain = url.hostname;
-  const path = url.pathname || '/';
-
-  return jar.cookies.filter((cookie) => {
-    if (isExpired(cookie)) {
-      return false;
+    if (domain) {
+      filtered = filtered.filter((cookie) => cookie.domain !== domain);
     }
 
-    if (!matchesDomain(cookie, domain)) {
-      return false;
+    if (path) {
+      filtered = filtered.filter((cookie) => cookie.path !== path);
     }
 
-    if (!matchesPath(cookie, path)) {
-      return false;
+    if (name) {
+      filtered = filtered.filter((cookie) => cookie.name !== name);
     }
 
-    if (cookie.secure && !isSecure) {
-      return false;
+    return {
+      ...this,
+      cookies: filtered,
+    };
+  },
+  getForRequest(uri: string, isSecure: boolean): readonly SetCookie[] {
+    const url = new URL(uri);
+    const domain = url.hostname;
+    const path = url.pathname || '/';
+
+    return this.cookies.filter((cookie) => {
+      if (isExpired(cookie)) {
+        return false;
+      }
+
+      if (!matchesDomain(cookie, domain)) {
+        return false;
+      }
+
+      if (!matchesPath(cookie, path)) {
+        return false;
+      }
+
+      if (cookie.secure && !isSecure) {
+        return false;
+      }
+
+      return true;
+    });
+  },
+  extractFromResponse(request: HttpRequest, response: HttpResponse): CookieJar {
+    const setCookieHeaders = response.getHeader('Set-Cookie');
+
+    if (!setCookieHeaders) {
+      return this;
     }
 
-    return true;
-  });
-};
+    const headers: readonly string[] = Array.isArray(setCookieHeaders)
+      ? setCookieHeaders
+      : [setCookieHeaders];
 
-/**
- * レスポンスからSet-Cookieヘッダーを抽出してCookieJarに追加します
- *
- * @param jar - CookieJar
- * @param request - HttpRequest
- * @param response - HttpResponse
- * @returns 更新されたCookieJar
- *
- * @example
- * ```typescript
- * const jar = CookieJar();
- * const updatedJar = extractCookiesFromResponse(jar, request, response);
- * ```
- */
-export const extractCookiesFromResponse = (
-  jar: CookieJar,
-  request: HttpRequest,
-  response: HttpResponse,
-): CookieJar => {
-  const setCookieHeaders = getHeaderFromResponse(response, 'Set-Cookie');
+    let updatedJar = Object.assign({}, this);
 
-  if (!setCookieHeaders) {
-    return jar;
-  }
+    for (const header of headers) {
+      const cookie = parseSetCookie(header);
 
-  const headers: readonly string[] = Array.isArray(setCookieHeaders)
-    ? setCookieHeaders
-    : [setCookieHeaders];
-
-  let updatedJar = jar;
-
-  for (const header of headers) {
-    const cookie = parseSetCookie(header);
-
-    if (!cookie.domain) {
-      const url = new URL(request.uri);
-      updatedJar = addCookie(updatedJar, { ...cookie, domain: url.hostname });
-    } else {
-      updatedJar = addCookie(updatedJar, cookie);
+      if (!cookie.domain) {
+        const url = new URL(request.uri);
+        updatedJar = this.add({ ...cookie, domain: url.hostname });
+      } else {
+        updatedJar = this.add(cookie);
+      }
     }
-  }
 
-  return updatedJar;
-};
+    return updatedJar;
+  },
+  addCookieHeaderToRequest(request: HttpRequest): HttpRequest {
+    const url = new URL(request.uri);
+    const isSecure = url.protocol === 'https:';
+    const cookies = this.getForRequest(request.uri, isSecure);
 
-/**
- * リクエストにCookieヘッダーを追加します
- *
- * @param jar - CookieJar
- * @param request - HttpRequest
- * @returns Cookie ヘッダーが追加されたHttpRequest
- *
- * @example
- * ```typescript
- * const jar = CookieJar({ cookies: [...] });
- * const request: HttpRequest = { uri: 'https://example.com/api', ... };
- * const updatedRequest = addCookieHeaderToRequest(jar, request);
- * ```
- */
-export const addCookieHeaderToRequest = (jar: CookieJar, request: HttpRequest): HttpRequest => {
-  const url = new URL(request.uri);
-  const isSecure = url.protocol === 'https:';
-  const cookies = getCookiesForRequest(jar, request.uri, isSecure);
+    if (cookies.length === 0) {
+      return request;
+    }
 
-  if (cookies.length === 0) {
-    return request;
-  }
+    const cookieHeaderValue = cookies.map((c) => `${c.name}=${c.value ?? ''}`).join('; ');
 
-  const cookieHeaderValue = cookies.map((c) => `${c.name}=${c.value ?? ''}`).join('; ');
-
-  return withHeader(request, 'Cookie', cookieHeaderValue);
-};
+    return request.withHeader('Cookie', cookieHeaderValue);
+  },
+});

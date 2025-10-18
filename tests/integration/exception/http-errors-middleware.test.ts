@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { httpErrors } from '../../../src/middleware/http-errors.js';
-import { HandlerStack, push, resolve } from '../../../src/handler/stack.js';
+import { HandlerStack } from '../../../src/handler/stack.js';
 import { HttpRequest } from '../../../src/message/request.js';
 import { HttpResponse } from '../../../src/message/response.js';
 import { extractClientError, extractServerError } from '../../../src/exception/index.js';
@@ -17,8 +17,8 @@ describe('httpErrors middleware integration', () => {
     const options: RequestOptions = { httpErrors: true };
 
     it('should throw ClientError for 404 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(404)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(404)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('GET', 'https://example.com/not-found');
 
       await expect(handler(request, options)).rejects.toThrow();
@@ -35,8 +35,8 @@ describe('httpErrors middleware integration', () => {
     });
 
     it('should throw ClientError for 400 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(400)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(400)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('POST', 'https://example.com/api');
 
       await expect(handler(request, options)).rejects.toThrow();
@@ -52,8 +52,8 @@ describe('httpErrors middleware integration', () => {
     });
 
     it('should throw ServerError for 500 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(500)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(500)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('GET', 'https://example.com/error');
 
       await expect(handler(request, options)).rejects.toThrow();
@@ -70,8 +70,8 @@ describe('httpErrors middleware integration', () => {
     });
 
     it('should throw ServerError for 503 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(503)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(503)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('GET', 'https://example.com/unavailable');
 
       await expect(handler(request, options)).rejects.toThrow();
@@ -87,8 +87,8 @@ describe('httpErrors middleware integration', () => {
     });
 
     it('should NOT throw for 200 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(200)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(200)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('GET', 'https://example.com/success');
 
       const response: HttpResponseType = await handler(request, options);
@@ -96,8 +96,8 @@ describe('httpErrors middleware integration', () => {
     });
 
     it('should NOT throw for 201 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(201)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(201)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('POST', 'https://example.com/created');
 
       const response: HttpResponseType = await handler(request, options);
@@ -105,8 +105,8 @@ describe('httpErrors middleware integration', () => {
     });
 
     it('should NOT throw for 204 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(204)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(204)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('DELETE', 'https://example.com/resource');
 
       const response: HttpResponseType = await handler(request, options);
@@ -114,8 +114,8 @@ describe('httpErrors middleware integration', () => {
     });
 
     it('should NOT throw for 3xx redirect responses', async () => {
-      const stack = push(HandlerStack(createMockHandler(301)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(301)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('GET', 'https://example.com/redirect');
 
       const response: HttpResponseType = await handler(request, options);
@@ -127,8 +127,8 @@ describe('httpErrors middleware integration', () => {
     const options: RequestOptions = { httpErrors: false };
 
     it('should NOT throw for 404 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(404)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(404)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('GET', 'https://example.com/not-found');
 
       const response: HttpResponseType = await handler(request, options);
@@ -136,8 +136,8 @@ describe('httpErrors middleware integration', () => {
     });
 
     it('should NOT throw for 500 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(500)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(500)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('GET', 'https://example.com/error');
 
       const response: HttpResponseType = await handler(request, options);
@@ -149,8 +149,8 @@ describe('httpErrors middleware integration', () => {
     const options: RequestOptions = {};
 
     it('should NOT throw for 404 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(404)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(404)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('GET', 'https://example.com/not-found');
 
       const response: HttpResponseType = await handler(request, options);
@@ -158,8 +158,8 @@ describe('httpErrors middleware integration', () => {
     });
 
     it('should NOT throw for 500 response', async () => {
-      const stack = push(HandlerStack(createMockHandler(500)), httpErrors(), 'http_errors');
-      const handler = resolve(stack);
+      const stack = HandlerStack(createMockHandler(500)).push(httpErrors(), 'http_errors');
+      const handler = stack.resolve();
       const request = HttpRequest('GET', 'https://example.com/error');
 
       const response: HttpResponseType = await handler(request, options);

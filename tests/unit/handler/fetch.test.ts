@@ -1,19 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { HttpRequest } from '../../../src/message/request';
+import { HttpRequest } from '../../../src/message/request';
 import { FetchHandler } from '../../../src/handler/fetch';
+import { Method } from '../../../src/method';
+import { HttpHeaders } from '../../../src/message/headers';
 
 // グローバル fetch のモック
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // モックリクエスト
-const createMockRequest = (): HttpRequest => ({
-  method: 'GET',
-  uri: 'https://example.com/test',
-  headers: { 'Content-Type': 'application/json' },
-  body: null,
-  version: '1.1',
-});
+const createMockRequest = () =>
+  HttpRequest(Method.GET, 'https://example.com/test', {
+    headers: HttpHeaders({ 'Content-Type': 'application/json' }),
+  });
 
 // モック Response
 const createMockResponse = (
@@ -83,22 +82,18 @@ describe('FetchHandler', () => {
 
     expect(response.statusCode).toBe(201);
     expect(response.reasonPhrase).toBe('Created');
-    expect(response.headers['Content-Type']).toBe('application/json');
-    expect(response.headers['X-Custom']).toBe('header-value');
+    expect(response.headers.get('Content-Type')).toBe('application/json');
+    expect(response.headers.get('X-Custom')).toBe('header-value');
     expect(response.body).not.toBeNull();
   });
 
   it('should handle request body', async () => {
     const handler = FetchHandler();
-    const request: HttpRequest = {
-      ...createMockRequest(),
-      method: 'POST',
-      body: {
-        content: 'request body',
-        size: 12,
-        isReadable: true,
-      },
-    };
+    const request = createMockRequest().withMethod(Method.POST).withBody({
+      content: 'request body',
+      size: 12,
+      isReadable: true,
+    });
 
     mockFetch.mockResolvedValue(createMockResponse(200, 'OK', {}, ''));
 

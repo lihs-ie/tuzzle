@@ -3,7 +3,7 @@ import { formatErrorMessage, summarizeBody } from '../../../src/exception/format
 import type { HttpRequest } from '../../../src/message/request.js';
 import { HttpRequest as createHttpRequest } from '../../../src/message/request.js';
 import type { HttpResponse } from '../../../src/message/response.js';
-import { HttpResponse as createHttpResponse, withBody } from '../../../src/message/response.js';
+import { HttpResponse as createHttpResponse } from '../../../src/message/response.js';
 import { HttpBodyStream } from '../../../src/message/stream.js';
 
 describe('formatErrorMessage', () => {
@@ -21,7 +21,7 @@ describe('formatErrorMessage', () => {
 
   it('should include response body summary when present', () => {
     const bodyStream = HttpBodyStream('Validation failed: email is required');
-    const response: HttpResponse = withBody(createHttpResponse(400, {}), bodyStream);
+    const response: HttpResponse = createHttpResponse(400, {}).withBody(bodyStream);
     const message = formatErrorMessage('Bad request', mockRequest, response);
 
     expect(message).toContain('Bad request');

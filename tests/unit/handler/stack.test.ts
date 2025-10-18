@@ -1,30 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import type { HttpRequest } from '../../../src/message/request';
-import type { HttpResponse } from '../../../src/message/response';
-import {
-  HandlerStack,
-  setHandler,
-  push,
-  unshift,
-  before,
-  after,
-  remove,
-  resolve,
-  hasHandler,
-  type Handler,
-  type Middleware,
-} from '../../../src/handler/stack';
+import { HttpRequest } from '../../../src/message/request';
+import { HttpResponse } from '../../../src/message/response';
+import { HandlerStack, type Handler, type Middleware } from '../../../src/handler/stack';
+import { Method } from '../../../src/method';
+import { HttpHeaders } from '../../../src/message/headers';
 
 // モックハンドラー
 const createMockHandler = (name: string): Handler => {
   return () =>
-    Promise.resolve({
-      statusCode: 200,
-      reasonPhrase: 'OK',
-      headers: { 'X-Handler': name },
-      body: null,
-      version: '1.1',
-    } as HttpResponse);
+    Promise.resolve(
+      HttpResponse(200, {
+        reasonPhrase: 'OK',
+        headers: HttpHeaders({ 'X-Handler': name }),
+      }),
+    );
 };
 
 // モックミドルウェア
@@ -33,12 +22,12 @@ const createMockMiddleware = (name: string): Middleware => {
     return async (request: HttpRequest, options: Record<string, unknown>) => {
       const modifiedRequest = {
         ...request,
-        headers: { ...request.headers, [`X-Middleware-${name}`]: 'passed' },
+        headers: request.headers.set(`X-Middleware-${name}`, 'passed'),
       };
       const response = await next(modifiedRequest, options);
       return {
         ...response,
-        headers: { ...response.headers, [`X-Response-${name}`]: 'processed' },
+        headers: response.headers.set(`X-Response-${name}`, 'processed'),
       };
     };
   };
@@ -65,7 +54,7 @@ describe('setHandler', () => {
   it('should set handler without mutating original stack', () => {
     const original = HandlerStack();
     const handler = createMockHandler('test');
-    const updated = setHandler(original, handler);
+    const updated = original.setHandler(handler);
 
     expect(updated.handler).toBe(handler);
     expect(updated).not.toBe(original);
@@ -77,7 +66,7 @@ describe('push', () => {
   it('should add middleware to top of stack', () => {
     const stack = HandlerStack();
     const middleware = createMockMiddleware('A');
-    const updated = push(stack, middleware, 'middleware-a');
+    const updated = stack.push(middleware, 'middleware-a');
 
     expect(updated.stack).toHaveLength(1);
     expect(updated.stack[0]?.name).toBe('middleware-a');
@@ -87,7 +76,7 @@ describe('push', () => {
   it('should not mutate original stack', () => {
     const original = HandlerStack();
     const middleware = createMockMiddleware('A');
-    const updated = push(original, middleware, 'middleware-a');
+    const updated = original.push(middleware, 'middleware-a');
 
     expect(updated).not.toBe(original);
     expect(original.stack).toHaveLength(0);
@@ -96,8 +85,8 @@ describe('push', () => {
 
   it('should add multiple middleware in order', () => {
     let stack = HandlerStack();
-    stack = push(stack, createMockMiddleware('A'), 'a');
-    stack = push(stack, createMockMiddleware('B'), 'b');
+    stack = stack.push(createMockMiddleware('A'), 'a');
+    stack = stack.push(createMockMiddleware('B'), 'b');
 
     expect(stack.stack).toHaveLength(2);
     expect(stack.stack[0]?.name).toBe('a');
@@ -109,7 +98,7 @@ describe('unshift', () => {
   it('should add middleware to bottom of stack', () => {
     const stack = HandlerStack();
     const middleware = createMockMiddleware('A');
-    const updated = unshift(stack, middleware, 'middleware-a');
+    const updated = stack.unshift(middleware, 'middleware-a');
 
     expect(updated.stack).toHaveLength(1);
     expect(updated.stack[0]?.name).toBe('middleware-a');
@@ -117,8 +106,8 @@ describe('unshift', () => {
 
   it('should insert at beginning when stack has items', () => {
     let stack = HandlerStack();
-    stack = push(stack, createMockMiddleware('A'), 'a');
-    stack = unshift(stack, createMockMiddleware('B'), 'b');
+    stack = stack.push(createMockMiddleware('A'), 'a');
+    stack = stack.unshift(createMockMiddleware('B'), 'b');
 
     expect(stack.stack).toHaveLength(2);
     expect(stack.stack[0]?.name).toBe('b');
@@ -129,9 +118,9 @@ describe('unshift', () => {
 describe('before', () => {
   it('should insert middleware before specified name', () => {
     let stack = HandlerStack();
-    stack = push(stack, createMockMiddleware('A'), 'a');
-    stack = push(stack, createMockMiddleware('C'), 'c');
-    stack = before(stack, 'c', createMockMiddleware('B'), 'b');
+    stack = stack.push(createMockMiddleware('A'), 'a');
+    stack = stack.push(createMockMiddleware('C'), 'c');
+    stack = stack.before('c', createMockMiddleware('B'), 'b');
 
     expect(stack.stack).toHaveLength(3);
     expect(stack.stack[0]?.name).toBe('a');
@@ -141,8 +130,8 @@ describe('before', () => {
 
   it('should return same stack if name not found', () => {
     let stack = HandlerStack();
-    stack = push(stack, createMockMiddleware('A'), 'a');
-    const updated = before(stack, 'nonexistent', createMockMiddleware('B'), 'b');
+    stack = stack.push(createMockMiddleware('A'), 'a');
+    const updated = stack.before('nonexistent', createMockMiddleware('B'), 'b');
 
     expect(updated).toBe(stack);
   });
@@ -151,9 +140,9 @@ describe('before', () => {
 describe('after', () => {
   it('should insert middleware after specified name', () => {
     let stack = HandlerStack();
-    stack = push(stack, createMockMiddleware('A'), 'a');
-    stack = push(stack, createMockMiddleware('C'), 'c');
-    stack = after(stack, 'a', createMockMiddleware('B'), 'b');
+    stack = stack.push(createMockMiddleware('A'), 'a');
+    stack = stack.push(createMockMiddleware('C'), 'c');
+    stack = stack.after('a', createMockMiddleware('B'), 'b');
 
     expect(stack.stack).toHaveLength(3);
     expect(stack.stack[0]?.name).toBe('a');
@@ -163,8 +152,8 @@ describe('after', () => {
 
   it('should return same stack if name not found', () => {
     let stack = HandlerStack();
-    stack = push(stack, createMockMiddleware('A'), 'a');
-    const updated = after(stack, 'nonexistent', createMockMiddleware('B'), 'b');
+    stack = stack.push(createMockMiddleware('A'), 'a');
+    const updated = stack.after('nonexistent', createMockMiddleware('B'), 'b');
 
     expect(updated).toBe(stack);
   });
@@ -173,10 +162,10 @@ describe('after', () => {
 describe('remove', () => {
   it('should remove middleware by name', () => {
     let stack = HandlerStack();
-    stack = push(stack, createMockMiddleware('A'), 'a');
-    stack = push(stack, createMockMiddleware('B'), 'b');
-    stack = push(stack, createMockMiddleware('C'), 'c');
-    stack = remove(stack, 'b');
+    stack = stack.push(createMockMiddleware('A'), 'a');
+    stack = stack.push(createMockMiddleware('B'), 'b');
+    stack = stack.push(createMockMiddleware('C'), 'c');
+    stack = stack.remove('b');
 
     expect(stack.stack).toHaveLength(2);
     expect(stack.stack[0]?.name).toBe('a');
@@ -185,8 +174,8 @@ describe('remove', () => {
 
   it('should return same stack if name not found', () => {
     let stack = HandlerStack();
-    stack = push(stack, createMockMiddleware('A'), 'a');
-    const updated = remove(stack, 'nonexistent');
+    stack = stack.push(createMockMiddleware('A'), 'a');
+    const updated = stack.remove('nonexistent');
 
     expect(updated).toBe(stack);
   });
@@ -195,59 +184,47 @@ describe('remove', () => {
 describe('hasHandler', () => {
   it('should return false when no handler set', () => {
     const stack = HandlerStack();
-    expect(hasHandler(stack)).toBe(false);
+    expect(stack.hasHandler()).toBe(false);
   });
 
   it('should return true when handler is set', () => {
     const handler = createMockHandler('test');
     const stack = HandlerStack(handler);
-    expect(hasHandler(stack)).toBe(true);
+    expect(stack.hasHandler()).toBe(true);
   });
 });
 
 describe('resolve', () => {
   it('should throw error when no handler set', () => {
     const stack = HandlerStack();
-    expect(() => resolve(stack)).toThrow('No handler has been set');
+    expect(() => stack.resolve()).toThrow('No handler has been set');
   });
 
   it('should return handler when stack is empty', async () => {
     const handler = createMockHandler('test');
     const stack = HandlerStack(handler);
-    const resolved = resolve(stack);
+    const resolved = stack.resolve();
 
-    const request = {
-      method: 'GET',
-      uri: 'https://example.com',
-      headers: {},
-      body: null,
-      version: '1.1',
-    } as HttpRequest;
+    const request = HttpRequest(Method.GET, 'https://example.com');
 
     const response = await resolved(request, {});
-    expect(response.headers['X-Handler']).toBe('test');
+    expect(response.headers.get('X-Handler')).toBe('test');
   });
 
   it('should compose middleware chain correctly', async () => {
     let stack = HandlerStack(createMockHandler('handler'));
-    stack = push(stack, createMockMiddleware('A'), 'a');
-    stack = push(stack, createMockMiddleware('B'), 'b');
+    stack = stack.push(createMockMiddleware('A'), 'a');
+    stack = stack.push(createMockMiddleware('B'), 'b');
 
-    const resolved = resolve(stack);
-    const request = {
-      method: 'GET',
-      uri: 'https://example.com',
-      headers: {},
-      body: null,
-      version: '1.1',
-    } as HttpRequest;
+    const resolved = stack.resolve();
+    const request = HttpRequest(Method.GET, 'https://example.com');
 
     const response = await resolved(request, {});
 
     // リクエストは A → B の順で処理
-    expect(request.headers['X-Middleware-A']).toBeUndefined(); // 元のrequestは変更されない
+    expect(request.headers.get('X-Middleware-A')).toBeUndefined(); // 元のrequestは変更されない
     // レスポンスは B → A の逆順で処理
-    expect(response.headers['X-Response-A']).toBe('processed');
-    expect(response.headers['X-Response-B']).toBe('processed');
+    expect(response.headers.get('X-Response-A')).toBe('processed');
+    expect(response.headers.get('X-Response-B')).toBe('processed');
   });
 });

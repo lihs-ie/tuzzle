@@ -5,13 +5,21 @@
 const HEADER_KEY_SEPARATOR = '-';
 const HEADER_VALUE_DELIMITER = ',';
 
-type HeaderValue = string | readonly string[];
+export type HeaderValue = string | readonly string[];
 
 /**
  * HTTP ヘッダーの型
  * キーは文字列、値は文字列または文字列の配列
  */
-export type HttpHeaders = Readonly<Record<string, HeaderValue>>;
+export interface HttpHeaders {
+  readonly data: Readonly<Record<string, HeaderValue>>;
+  readonly set: (key: string, value: HeaderValue) => HttpHeaders;
+  readonly remove: (key: string) => HttpHeaders;
+  readonly get: (key: string) => HeaderValue | undefined;
+  readonly has: (key: string) => boolean;
+  readonly merge: (...additional: HttpHeaders[]) => HttpHeaders;
+  readonly toRecord: () => Readonly<Record<string, HeaderValue>>;
+}
 
 const cloneHeaderValue = (value: HeaderValue): HeaderValue => {
   if (typeof value === 'string') {
@@ -25,7 +33,9 @@ const cloneHeaderValue = (value: HeaderValue): HeaderValue => {
   return cloned;
 };
 
-const cloneHeaders = (headers: HttpHeaders): Record<string, HeaderValue> => {
+const cloneHeaders = (
+  headers: Readonly<Record<string, HeaderValue>>,
+): Record<string, HeaderValue> => {
   const clone: Record<string, HeaderValue> = {};
 
   for (const [key, value] of Object.entries(headers)) {
@@ -51,93 +61,6 @@ export const normalizeHeaderKey = (key: string): string =>
     .join(HEADER_KEY_SEPARATOR);
 
 /**
- * ヘッダーを追加または更新した新しいヘッダーオブジェクトを返す
- *
- * @param headers - 元となるヘッダー
- * @param key - 追加または更新するヘッダーキー
- * @param value - 設定するヘッダー値
- * @returns 新しいヘッダーオブジェクト
- */
-export const setHeader = (headers: HttpHeaders, key: string, value: HeaderValue): HttpHeaders => {
-  const normalizedKey = normalizeHeaderKey(key);
-  const next = cloneHeaders(headers);
-  next[normalizedKey] = cloneHeaderValue(value);
-  return next;
-};
-
-/**
- * 指定したヘッダーキーを削除する
- *
- * @param headers - 元となるヘッダー
- * @param key - 削除したいヘッダーキー
- * @returns 指定キーを取り除いたヘッダーオブジェクト。キーが存在しない場合は元のヘッダー
- */
-export const removeHeader = (headers: HttpHeaders, key: string): HttpHeaders => {
-  const normalizedKey = normalizeHeaderKey(key);
-  let hasRemoval = false;
-  const next: Record<string, HeaderValue> = {};
-
-  for (const [currentKey, value] of Object.entries(headers)) {
-    if (normalizeHeaderKey(currentKey) === normalizedKey) {
-      hasRemoval = true;
-      continue;
-    }
-    next[normalizeHeaderKey(currentKey)] = cloneHeaderValue(value);
-  }
-
-  return hasRemoval ? (next as HttpHeaders) : headers;
-};
-
-/**
- * 指定したヘッダーキーの値を取得する
- *
- * @param headers - 検索対象のヘッダー
- * @param key - 取得したいヘッダーキー
- * @returns 見つかった値。存在しない場合は undefined
- */
-export const getHeader = (headers: HttpHeaders, key: string): HeaderValue | undefined => {
-  const normalizedKey = normalizeHeaderKey(key);
-
-  for (const [currentKey, value] of Object.entries(headers)) {
-    if (normalizeHeaderKey(currentKey) === normalizedKey) {
-      return value;
-    }
-  }
-
-  return undefined;
-};
-
-/**
- * ヘッダーの存在を確認する
- *
- * @param headers - 検査対象のヘッダー
- * @param key - 存在確認したいヘッダーキー
- * @returns 指定したヘッダーが存在する場合は true
- */
-export const hasHeader = (headers: HttpHeaders, key: string): boolean =>
-  getHeader(headers, key) !== undefined;
-
-/**
- * 複数のヘッダーをマージする
- * 後勝ちで上書きされる
- *
- * @param base - 基本ヘッダー
- * @param additional - マージする追加ヘッダー
- * @returns マージ後の新しいヘッダー
- */
-export const mergeHeaders = (base: HttpHeaders, ...additional: HttpHeaders[]): HttpHeaders => {
-  const merged = cloneHeaders(base);
-
-  for (const headers of additional) {
-    for (const [key, value] of Object.entries(headers)) {
-      merged[normalizeHeaderKey(key)] = cloneHeaderValue(value);
-    }
-  }
-
-  return merged;
-};
-
-/**
  * カンマ区切りのヘッダー値を配列に変換する
  *
  * @param value - 解析対象のヘッダー値
@@ -152,4 +75,79 @@ export const parseHeaderValue = (value: string): readonly string[] => {
     .split(HEADER_VALUE_DELIMITER)
     .map((segment) => segment.trim())
     .filter((segment) => segment.length > 0);
+};
+
+/**
+ * 新しいHttpHeadersオブジェクトを生成する
+ *
+ * @param data - 初期ヘッダーデータ（省略可）
+ * @returns 新しいHttpHeadersオブジェクト
+ *
+ * @example
+ * ```typescript
+ * const headers = HttpHeaders({ 'Content-Type': 'application/json' });
+ * const updated = headers.set('Authorization', 'Bearer token');
+ * ```
+ */
+export const HttpHeaders = (data?: Readonly<Record<string, HeaderValue>>): HttpHeaders => {
+  const normalizedData = data ? cloneHeaders(data) : {};
+
+  return {
+    data: normalizedData,
+
+    set(key: string, value: HeaderValue): HttpHeaders {
+      const normalizedKey = normalizeHeaderKey(key);
+      const next = cloneHeaders(this.data);
+      next[normalizedKey] = cloneHeaderValue(value);
+      return HttpHeaders(next);
+    },
+
+    remove(key: string): HttpHeaders {
+      const normalizedKey = normalizeHeaderKey(key);
+      let hasRemoval = false;
+      const next: Record<string, HeaderValue> = {};
+
+      for (const [currentKey, currentValue] of Object.entries(this.data)) {
+        if (normalizeHeaderKey(currentKey) === normalizedKey) {
+          hasRemoval = true;
+          continue;
+        }
+        next[normalizeHeaderKey(currentKey)] = cloneHeaderValue(currentValue);
+      }
+
+      return hasRemoval ? HttpHeaders(next) : this;
+    },
+
+    get(key: string): HeaderValue | undefined {
+      const normalizedKey = normalizeHeaderKey(key);
+
+      for (const [currentKey, value] of Object.entries(this.data)) {
+        if (normalizeHeaderKey(currentKey) === normalizedKey) {
+          return value;
+        }
+      }
+
+      return undefined;
+    },
+
+    has(key: string): boolean {
+      return this.get(key) !== undefined;
+    },
+
+    merge(...additional: HttpHeaders[]): HttpHeaders {
+      const merged = cloneHeaders(this.data);
+
+      for (const headers of additional) {
+        for (const [key, value] of Object.entries(headers.data)) {
+          merged[normalizeHeaderKey(key)] = cloneHeaderValue(value);
+        }
+      }
+
+      return HttpHeaders(merged);
+    },
+
+    toRecord(): Readonly<Record<string, HeaderValue>> {
+      return this.data;
+    },
+  };
 };

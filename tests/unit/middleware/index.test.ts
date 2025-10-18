@@ -1,36 +1,31 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { HttpRequest } from '../../../src/message/request';
-import type { HttpResponse } from '../../../src/message/response';
+import { HttpRequest } from '../../../src/message/request';
+import { HttpResponse } from '../../../src/message/response';
 import type { Handler } from '../../../src/handler/stack';
 import { mapRequest, mapResponse, tap } from '../../../src/middleware/index';
+import { Method } from '../../../src/method';
+import { HttpHeaders } from '../../../src/message/headers';
 
 // モックハンドラー
 const createMockHandler = (): Handler => {
   return () =>
-    Promise.resolve({
-      statusCode: 200,
-      reasonPhrase: 'OK',
-      headers: { 'X-Original': 'handler' },
-      body: null,
-      version: '1.1',
-    } as HttpResponse);
+    Promise.resolve(
+      HttpResponse(200, {
+        reasonPhrase: 'OK',
+        headers: HttpHeaders({ 'X-Original': 'handler' }),
+      }),
+    );
 };
 
 // モックリクエスト
-const createMockRequest = (): HttpRequest => ({
-  method: 'GET',
-  uri: 'https://example.com',
-  headers: {},
-  body: null,
-  version: '1.1',
-});
+const createMockRequest = () => HttpRequest(Method.GET, 'https://example.com');
 
 describe('mapRequest', () => {
   it('should transform request before passing to handler', async () => {
     const handler = createMockHandler();
     const middleware = mapRequest((request) => ({
       ...request,
-      headers: { ...request.headers, 'X-Modified': 'by-middleware' },
+      headers: request.headers.set('X-Modified', 'by-middleware'),
     }));
 
     const wrappedHandler = middleware(handler);
@@ -58,11 +53,11 @@ describe('mapRequest', () => {
     const handler = createMockHandler();
     const middleware1 = mapRequest((request) => ({
       ...request,
-      headers: { ...request.headers, 'X-First': 'applied' },
+      headers: request.headers.set('X-First', 'applied'),
     }));
     const middleware2 = mapRequest((request) => ({
       ...request,
-      headers: { ...request.headers, 'X-Second': 'applied' },
+      headers: request.headers.set('X-Second', 'applied'),
     }));
 
     const wrappedHandler = middleware2(middleware1(handler));
@@ -78,15 +73,15 @@ describe('mapResponse', () => {
     const handler = createMockHandler();
     const middleware = mapResponse((response) => ({
       ...response,
-      headers: { ...response.headers, 'X-Modified': 'by-middleware' },
+      headers: response.headers.set('X-Modified', 'by-middleware'),
     }));
 
     const wrappedHandler = middleware(handler);
     const request = createMockRequest();
     const response = await wrappedHandler(request, {});
 
-    expect(response.headers['X-Original']).toBe('handler');
-    expect(response.headers['X-Modified']).toBe('by-middleware');
+    expect(response.headers.get('X-Original')).toBe('handler');
+    expect(response.headers.get('X-Modified')).toBe('by-middleware');
   });
 
   it('should allow modifying status code', async () => {
@@ -109,19 +104,19 @@ describe('mapResponse', () => {
     const handler = createMockHandler();
     const middleware1 = mapResponse((response) => ({
       ...response,
-      headers: { ...response.headers, 'X-First': 'applied' },
+      headers: response.headers.set('X-First', 'applied'),
     }));
     const middleware2 = mapResponse((response) => ({
       ...response,
-      headers: { ...response.headers, 'X-Second': 'applied' },
+      headers: response.headers.set('X-Second', 'applied'),
     }));
 
     const wrappedHandler = middleware2(middleware1(handler));
     const request = createMockRequest();
     const response = await wrappedHandler(request, {});
 
-    expect(response.headers['X-First']).toBe('applied');
-    expect(response.headers['X-Second']).toBe('applied');
+    expect(response.headers.get('X-First')).toBe('applied');
+    expect(response.headers.get('X-Second')).toBe('applied');
   });
 });
 
@@ -182,7 +177,7 @@ describe('tap', () => {
     const response = await wrappedHandler(request, {});
 
     expect(response.statusCode).toBe(200);
-    expect(response.headers['X-Original']).toBe('handler');
+    expect(response.headers.get('X-Original')).toBe('handler');
   });
 
   it('should work without any functions provided', async () => {

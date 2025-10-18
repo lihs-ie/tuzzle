@@ -4,7 +4,7 @@
 
 import type { HttpRequest } from '../message/request';
 import type { HttpResponse } from '../message/response';
-import type { HttpHeaders } from '../message/headers';
+import type { HeaderValue } from '../message/headers';
 import type { CookieJar } from '../cookie/jar.js';
 
 const ERROR_NO_HANDLER = 'No handler has been set';
@@ -16,7 +16,7 @@ export type MultipartItem = {
   readonly name: string;
   readonly contents: string | Blob | ReadableStream<Uint8Array>;
   readonly filename?: string;
-  readonly headers?: HttpHeaders;
+  readonly headers?: Readonly<Record<string, HeaderValue>>;
 };
 
 /**
@@ -100,7 +100,7 @@ export type RequestOptions = {
   readonly formParams?: Record<string, string>;
 
   /** HTTPヘッダー */
-  readonly headers?: HttpHeaders;
+  readonly headers?: Readonly<Record<string, HeaderValue>>;
 
   /** HTTPエラー例外化 */
   readonly httpErrors?: boolean;
@@ -176,10 +176,20 @@ export type StackItem = {
 /**
  * ハンドラースタック
  */
-export type HandlerStack = {
+export interface HandlerStack {
   readonly handler: Handler | null;
   readonly stack: readonly StackItem[];
-};
+
+  // メソッドスタイル
+  readonly setHandler: (handler: Handler) => HandlerStack;
+  readonly push: (middleware: Middleware, name: string) => HandlerStack;
+  readonly unshift: (middleware: Middleware, name: string) => HandlerStack;
+  readonly before: (findName: string, middleware: Middleware, withName: string) => HandlerStack;
+  readonly after: (findName: string, middleware: Middleware, withName: string) => HandlerStack;
+  readonly remove: (name: string) => HandlerStack;
+  readonly hasHandler: () => boolean;
+  readonly resolve: () => Handler;
+}
 
 /**
  * 新しいハンドラースタックを生成する
@@ -190,152 +200,75 @@ export type HandlerStack = {
 export const HandlerStack = (handler?: Handler): HandlerStack => ({
   handler: handler ?? null,
   stack: [],
+
+  setHandler(newHandler: Handler): HandlerStack {
+    return HandlerStack(newHandler);
+  },
+
+  push(middleware: Middleware, name: string): HandlerStack {
+    const newStack = HandlerStack(this.handler ?? undefined);
+    return {
+      ...newStack,
+      stack: [...this.stack, { middleware, name }],
+    };
+  },
+
+  unshift(middleware: Middleware, name: string): HandlerStack {
+    const newStack = HandlerStack(this.handler ?? undefined);
+    return {
+      ...newStack,
+      stack: [{ middleware, name }, ...this.stack],
+    };
+  },
+
+  before(findName: string, middleware: Middleware, withName: string): HandlerStack {
+    const index = this.stack.findIndex((item) => item.name === findName);
+    if (index === -1) {
+      return this;
+    }
+    const newStackArray = [...this.stack];
+    newStackArray.splice(index, 0, { middleware, name: withName });
+    const newStack = HandlerStack(this.handler ?? undefined);
+    return {
+      ...newStack,
+      stack: newStackArray,
+    };
+  },
+
+  after(findName: string, middleware: Middleware, withName: string): HandlerStack {
+    const index = this.stack.findIndex((item) => item.name === findName);
+    if (index === -1) {
+      return this;
+    }
+    const newStackArray = [...this.stack];
+    newStackArray.splice(index + 1, 0, { middleware, name: withName });
+    const newStack = HandlerStack(this.handler ?? undefined);
+    return {
+      ...newStack,
+      stack: newStackArray,
+    };
+  },
+
+  remove(name: string): HandlerStack {
+    const newStackArray = this.stack.filter((item) => item.name !== name);
+    if (newStackArray.length === this.stack.length) {
+      return this;
+    }
+    const newStack = HandlerStack(this.handler ?? undefined);
+    return {
+      ...newStack,
+      stack: newStackArray,
+    };
+  },
+
+  hasHandler(): boolean {
+    return this.handler !== null;
+  },
+
+  resolve(): Handler {
+    if (!this.handler) {
+      throw new Error(ERROR_NO_HANDLER);
+    }
+    return this.stack.reduceRight((handler, item) => item.middleware(handler), this.handler);
+  },
 });
-
-/**
- * ハンドラーを設定した新しいスタックを返す
- *
- * @param stack - 元のスタック
- * @param handler - 設定するハンドラー
- * @returns ハンドラーが設定された新しいスタック
- */
-export const setHandler = (stack: HandlerStack, handler: Handler): HandlerStack => ({
-  ...stack,
-  handler,
-});
-
-/**
- * ミドルウェアをスタックの一番上（末尾）に追加する
- *
- * @param stack - 元のスタック
- * @param middleware - 追加するミドルウェア
- * @param name - ミドルウェアの名前
- * @returns ミドルウェアが追加された新しいスタック
- */
-export const push = (stack: HandlerStack, middleware: Middleware, name: string): HandlerStack => ({
-  ...stack,
-  stack: [...stack.stack, { middleware, name }],
-});
-
-/**
- * ミドルウェアをスタックの一番下（先頭）に追加する
- *
- * @param stack - 元のスタック
- * @param middleware - 追加するミドルウェア
- * @param name - ミドルウェアの名前
- * @returns ミドルウェアが追加された新しいスタック
- */
-export const unshift = (
-  stack: HandlerStack,
-  middleware: Middleware,
-  name: string,
-): HandlerStack => ({
-  ...stack,
-  stack: [{ middleware, name }, ...stack.stack],
-});
-
-/**
- * 指定した名前のミドルウェアの前に挿入する
- *
- * @param stack - 元のスタック
- * @param findName - 検索するミドルウェア名
- * @param middleware - 挿入するミドルウェア
- * @param withName - 挿入するミドルウェアの名前
- * @returns ミドルウェアが挿入された新しいスタック。見つからない場合は元のスタック
- */
-export const before = (
-  stack: HandlerStack,
-  findName: string,
-  middleware: Middleware,
-  withName: string,
-): HandlerStack => {
-  const index = stack.stack.findIndex((item) => item.name === findName);
-
-  if (index === -1) {
-    return stack;
-  }
-
-  const newStack = [...stack.stack];
-  newStack.splice(index, 0, { middleware, name: withName });
-
-  return {
-    ...stack,
-    stack: newStack,
-  };
-};
-
-/**
- * 指定した名前のミドルウェアの後に挿入する
- *
- * @param stack - 元のスタック
- * @param findName - 検索するミドルウェア名
- * @param middleware - 挿入するミドルウェア
- * @param withName - 挿入するミドルウェアの名前
- * @returns ミドルウェアが挿入された新しいスタック。見つからない場合は元のスタック
- */
-export const after = (
-  stack: HandlerStack,
-  findName: string,
-  middleware: Middleware,
-  withName: string,
-): HandlerStack => {
-  const index = stack.stack.findIndex((item) => item.name === findName);
-
-  if (index === -1) {
-    return stack;
-  }
-
-  const newStack = [...stack.stack];
-  newStack.splice(index + 1, 0, { middleware, name: withName });
-
-  return {
-    ...stack,
-    stack: newStack,
-  };
-};
-
-/**
- * 指定した名前のミドルウェアを削除する
- *
- * @param stack - 元のスタック
- * @param name - 削除するミドルウェアの名前
- * @returns ミドルウェアが削除された新しいスタック。見つからない場合は元のスタック
- */
-export const remove = (stack: HandlerStack, name: string): HandlerStack => {
-  const newStack = stack.stack.filter((item) => item.name !== name);
-
-  if (newStack.length === stack.stack.length) {
-    return stack;
-  }
-
-  return {
-    ...stack,
-    stack: newStack,
-  };
-};
-
-/**
- * ハンドラーが設定されているかチェックする
- *
- * @param stack - チェック対象のスタック
- * @returns ハンドラーが設定されている場合は true
- */
-export const hasHandler = (stack: HandlerStack): boolean => stack.handler !== null;
-
-/**
- * ミドルウェアチェーンを解決して最終的なハンドラー関数を返す
- * スタックを逆順に畳み込み、各ミドルウェアが次のハンドラーをラップする
- *
- * @param stack - 解決するスタック
- * @returns 最終的なハンドラー関数
- * @throws ハンドラーが設定されていない場合
- */
-export const resolve = (stack: HandlerStack): Handler => {
-  if (!stack.handler) {
-    throw new Error(ERROR_NO_HANDLER);
-  }
-
-  // スタックを逆順に畳み込み
-  // [A, B, C] の場合、C(B(A(handler))) の順でラップされる
-  return stack.stack.reduceRight((handler, item) => item.middleware(handler), stack.handler);
-};

@@ -1,14 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  normalizeHeaderKey,
-  setHeader,
-  removeHeader,
-  getHeader,
-  hasHeader,
-  mergeHeaders,
-  parseHeaderValue,
-  type HttpHeaders,
-} from '../../../src/message/headers';
+import { normalizeHeaderKey, parseHeaderValue, HttpHeaders } from '../../../src/message/headers';
 
 describe('normalizeHeaderKey', () => {
   it('should normalize header key to Title-Case format', () => {
@@ -31,90 +22,89 @@ describe('normalizeHeaderKey', () => {
   });
 });
 
-describe('setHeader', () => {
+describe('HttpHeaders.set', () => {
   it('should add new header without mutating original headers', () => {
-    const original: HttpHeaders = {};
-    const updated = setHeader(original, 'content-type', 'application/json');
+    const original = HttpHeaders();
+    const updated = original.set('content-type', 'application/json');
 
     expect(updated).not.toBe(original);
-    expect(updated['Content-Type']).toBe('application/json');
-    expect(original['Content-Type']).toBeUndefined();
+    expect(updated.data['Content-Type']).toBe('application/json');
+    expect(original.data['Content-Type']).toBeUndefined();
   });
 
   it('should override existing header regardless of case', () => {
-    const headers: HttpHeaders = { 'Content-Type': 'text/plain' };
-    const updated = setHeader(headers, 'content-type', 'application/json');
+    const headers = HttpHeaders({ 'Content-Type': 'text/plain' });
+    const updated = headers.set('content-type', 'application/json');
 
-    expect(updated['Content-Type']).toBe('application/json');
-    expect(Object.keys(updated)).toEqual(['Content-Type']);
+    expect(updated.data['Content-Type']).toBe('application/json');
+    expect(Object.keys(updated.data)).toEqual(['Content-Type']);
   });
 
   it('should clone array values to preserve immutability', () => {
     const values = ['a', 'b'] as const;
-    const headers: HttpHeaders = {};
-    const updated = setHeader(headers, 'x-values', values);
+    const headers = HttpHeaders();
+    const updated = headers.set('x-values', values);
 
-    const stored = getHeader(updated, 'x-values');
+    const stored = updated.get('x-values');
     expect(stored).toEqual(['a', 'b']);
     expect(stored).not.toBe(values);
   });
 });
 
-describe('removeHeader', () => {
+describe('HttpHeaders.remove', () => {
   it('should remove header ignoring case', () => {
-    const headers: HttpHeaders = { 'Content-Type': 'application/json', Accept: 'application/json' };
-    const updated = removeHeader(headers, 'content-type');
+    const headers = HttpHeaders({ 'Content-Type': 'application/json', Accept: 'application/json' });
+    const updated = headers.remove('content-type');
 
-    expect(updated['Content-Type']).toBeUndefined();
-    expect(updated.Accept).toBe('application/json');
+    expect(updated.data['Content-Type']).toBeUndefined();
+    expect(updated.data.Accept).toBe('application/json');
   });
 
   it('should return original headers when key does not exist', () => {
-    const headers: HttpHeaders = { Accept: 'application/json' };
-    const updated = removeHeader(headers, 'content-type');
+    const headers = HttpHeaders({ Accept: 'application/json' });
+    const updated = headers.remove('content-type');
 
     expect(updated).toEqual(headers);
   });
 });
 
-describe('getHeader / hasHeader', () => {
+describe('HttpHeaders.get / HttpHeaders.has', () => {
   it('should retrieve header value ignoring case', () => {
-    const headers: HttpHeaders = { 'Content-Type': 'application/json' };
+    const headers = HttpHeaders({ 'Content-Type': 'application/json' });
 
-    expect(getHeader(headers, 'content-type')).toBe('application/json');
-    expect(hasHeader(headers, 'CONTENT-TYPE')).toBe(true);
+    expect(headers.get('content-type')).toBe('application/json');
+    expect(headers.has('CONTENT-TYPE')).toBe(true);
   });
 
   it('should return undefined for missing headers', () => {
-    const headers: HttpHeaders = {};
+    const headers = HttpHeaders();
 
-    expect(getHeader(headers, 'content-type')).toBeUndefined();
-    expect(hasHeader(headers, 'content-type')).toBe(false);
+    expect(headers.get('content-type')).toBeUndefined();
+    expect(headers.has('content-type')).toBe(false);
   });
 });
 
-describe('mergeHeaders', () => {
+describe('HttpHeaders.merge', () => {
   it('should merge multiple header objects with later values taking precedence', () => {
-    const base: HttpHeaders = { Accept: 'application/json' };
-    const merged = mergeHeaders(
-      base,
-      { 'Content-Type': 'text/plain' },
-      { 'content-type': 'application/json' },
+    const base = HttpHeaders({ Accept: 'application/json' });
+    const merged = base.merge(
+      HttpHeaders({ 'Content-Type': 'text/plain' }),
+      HttpHeaders({ 'content-type': 'application/json' }),
     );
 
-    expect(merged.Accept).toBe('application/json');
-    expect(merged['Content-Type']).toBe('application/json');
+    expect(merged.data.Accept).toBe('application/json');
+    expect(merged.data['Content-Type']).toBe('application/json');
   });
 
   it('should not mutate input headers', () => {
-    const base: HttpHeaders = { Accept: 'application/json' };
-    const additional: HttpHeaders = { 'X-Test': 'value' };
-    const merged = mergeHeaders(base, additional);
+    const base = HttpHeaders({ Accept: 'application/json' });
+    const additional = HttpHeaders({ 'X-Test': 'value' });
+    const merged = base.merge(additional);
 
     expect(merged).not.toBe(base);
     expect(merged).not.toBe(additional);
-    expect(merged.Accept).toBe('application/json');
-    expect(merged['X-Test']).toBe('value');
+    expect(merged.data.Accept).toBe('application/json');
+    expect(merged.data['X-Test']).toBe('value');
   });
 });
 

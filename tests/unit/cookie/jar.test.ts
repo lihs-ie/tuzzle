@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  CookieJar,
-  addCookie,
-  removeCookie,
-  getCookiesForRequest,
-} from '../../../src/cookie/jar.js';
+import { CookieJar } from '../../../src/cookie/jar.js';
 import type { SetCookie } from '../../../src/cookie/set.js';
 
 describe('CookieJar', () => {
@@ -37,7 +32,7 @@ describe('CookieJar', () => {
   });
 });
 
-describe('addCookie', () => {
+describe('jar.add', () => {
   it('should add cookie to empty jar', () => {
     const jar = CookieJar();
     const cookie: SetCookie = {
@@ -51,7 +46,7 @@ describe('addCookie', () => {
       httpOnly: false,
       discard: false,
     };
-    const updatedJar = addCookie(jar, cookie);
+    const updatedJar = jar.add(cookie);
     expect(updatedJar.cookies).toHaveLength(1);
     expect(updatedJar.cookies[0]).toEqual(cookie);
   });
@@ -74,7 +69,7 @@ describe('addCookie', () => {
       ...cookie1,
       value: 'new-value',
     };
-    const updatedJar = addCookie(jar, cookie2);
+    const updatedJar = jar.add(cookie2);
 
     expect(updatedJar.cookies).toHaveLength(1);
     expect(updatedJar.cookies[0]?.value).toBe('new-value');
@@ -93,11 +88,11 @@ describe('addCookie', () => {
       httpOnly: false,
       discard: false,
     };
-    expect(() => addCookie(jar, invalidCookie)).toThrow();
+    expect(() => jar.add(invalidCookie)).toThrow();
   });
 });
 
-describe('removeCookie', () => {
+describe('jar.remove', () => {
   it('should remove cookie by name', () => {
     const cookie: SetCookie = {
       name: 'sessionId',
@@ -111,7 +106,7 @@ describe('removeCookie', () => {
       discard: false,
     };
     const jar = CookieJar({ cookies: [cookie] });
-    const updatedJar = removeCookie(jar, null, null, 'sessionId');
+    const updatedJar = jar.remove(null, null, 'sessionId');
     expect(updatedJar.cookies).toHaveLength(0);
   });
 
@@ -128,12 +123,12 @@ describe('removeCookie', () => {
       discard: false,
     };
     const jar = CookieJar({ cookies: [cookie] });
-    const updatedJar = removeCookie(jar, 'example.com', null, null);
+    const updatedJar = jar.remove('example.com', null, null);
     expect(updatedJar.cookies).toHaveLength(0);
   });
 });
 
-describe('getCookiesForRequest', () => {
+describe('jar.getForRequest', () => {
   it('should return cookies matching domain and path', () => {
     const cookie: SetCookie = {
       name: 'sessionId',
@@ -147,7 +142,7 @@ describe('getCookiesForRequest', () => {
       discard: false,
     };
     const jar = CookieJar({ cookies: [cookie] });
-    const cookies = getCookiesForRequest(jar, 'https://example.com/api', true);
+    const cookies = jar.getForRequest('https://example.com/api', true);
     expect(cookies).toHaveLength(1);
     expect(cookies[0]).toEqual(cookie);
   });
@@ -165,7 +160,7 @@ describe('getCookiesForRequest', () => {
       discard: false,
     };
     const jar = CookieJar({ cookies: [expiredCookie] });
-    const cookies = getCookiesForRequest(jar, 'https://example.com/', true);
+    const cookies = jar.getForRequest('https://example.com/', true);
     expect(cookies).toHaveLength(0);
   });
 
@@ -182,7 +177,7 @@ describe('getCookiesForRequest', () => {
       discard: false,
     };
     const jar = CookieJar({ cookies: [secureCookie] });
-    const cookies = getCookiesForRequest(jar, 'http://example.com/', false);
+    const cookies = jar.getForRequest('http://example.com/', false);
     expect(cookies).toHaveLength(0);
   });
 });

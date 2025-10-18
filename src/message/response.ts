@@ -3,13 +3,8 @@
  */
 
 import type { HttpBodyStream } from './stream';
-import {
-  setHeader as setHeaderInHeaders,
-  removeHeader as removeHeaderFromHeaders,
-  getHeader as getHeaderFromHeaders,
-  hasHeader as hasHeaderInHeaders,
-  type HttpHeaders,
-} from './headers';
+import { HttpHeaders } from './headers';
+import type { HttpHeaders as HttpHeadersType } from './headers';
 
 const DEFAULT_HTTP_VERSION = '1.1';
 const HEADER_LINE_SEPARATOR = ', ';
@@ -46,13 +41,23 @@ const getReasonPhrase = (statusCode: number): string => REASON_PHRASES[statusCod
 /**
  * HTTP レスポンスの型
  */
-export type HttpResponse = {
+export interface HttpResponse {
   readonly statusCode: number;
   readonly reasonPhrase: string;
-  readonly headers: HttpHeaders;
+  readonly headers: HttpHeadersType;
   readonly body: HttpBodyStream | null;
   readonly version: string;
-};
+
+  // メソッドスタイル
+  readonly withStatus: (statusCode: number, reasonPhrase?: string) => HttpResponse;
+  readonly withHeader: (key: string, value: string | readonly string[]) => HttpResponse;
+  readonly withoutHeader: (key: string) => HttpResponse;
+  readonly withBody: (body: HttpBodyStream | null) => HttpResponse;
+  readonly withVersion: (version: string) => HttpResponse;
+  readonly getHeader: (key: string) => string | readonly string[] | undefined;
+  readonly hasHeader: (key: string) => boolean;
+  readonly getHeaderLine: (key: string) => string;
+}
 
 /**
  * 新しい HTTP レスポンスを生成する
@@ -63,136 +68,92 @@ export type HttpResponse = {
  */
 export const HttpResponse = (
   statusCode: number,
-  options?: Partial<Omit<HttpResponse, 'statusCode'>>,
+  options?: Partial<
+    Omit<
+      HttpResponse,
+      | 'statusCode'
+      | 'withStatus'
+      | 'withHeader'
+      | 'withoutHeader'
+      | 'withBody'
+      | 'withVersion'
+      | 'getHeader'
+      | 'hasHeader'
+      | 'getHeaderLine'
+    >
+  >,
 ): HttpResponse => ({
   statusCode,
   reasonPhrase: options?.reasonPhrase ?? getReasonPhrase(statusCode),
-  headers: options?.headers ?? {},
+  headers: options?.headers ?? HttpHeaders(),
   body: options?.body ?? null,
   version: options?.version ?? DEFAULT_HTTP_VERSION,
+
+  withStatus(newStatusCode: number, newReasonPhrase?: string): HttpResponse {
+    return HttpResponse(newStatusCode, {
+      reasonPhrase: newReasonPhrase ?? getReasonPhrase(newStatusCode),
+      headers: this.headers,
+      body: this.body,
+      version: this.version,
+    });
+  },
+
+  withHeader(key: string, value: string | readonly string[]): HttpResponse {
+    return HttpResponse(this.statusCode, {
+      reasonPhrase: this.reasonPhrase,
+      headers: this.headers.set(key, value),
+      body: this.body,
+      version: this.version,
+    });
+  },
+
+  withoutHeader(key: string): HttpResponse {
+    const newHeaders = this.headers.remove(key);
+    if (newHeaders === this.headers) {
+      return this;
+    }
+    return HttpResponse(this.statusCode, {
+      reasonPhrase: this.reasonPhrase,
+      headers: newHeaders,
+      body: this.body,
+      version: this.version,
+    });
+  },
+
+  withBody(newBody: HttpBodyStream | null): HttpResponse {
+    return HttpResponse(this.statusCode, {
+      reasonPhrase: this.reasonPhrase,
+      headers: this.headers,
+      body: newBody,
+      version: this.version,
+    });
+  },
+
+  withVersion(newVersion: string): HttpResponse {
+    return HttpResponse(this.statusCode, {
+      reasonPhrase: this.reasonPhrase,
+      headers: this.headers,
+      body: this.body,
+      version: newVersion,
+    });
+  },
+
+  getHeader(key: string): string | readonly string[] | undefined {
+    return this.headers.get(key);
+  },
+
+  hasHeader(key: string): boolean {
+    return this.headers.has(key);
+  },
+
+  getHeaderLine(key: string): string {
+    const value = this.headers.get(key);
+    if (value === undefined) {
+      return '';
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    return value.join(HEADER_LINE_SEPARATOR);
+  },
 });
-
-/**
- * ステータスコードと理由句を変更した新しいレスポンスを返す
- *
- * @param response - 元のレスポンス
- * @param statusCode - 新しいステータスコード
- * @param reasonPhrase - 新しい理由句（省略時は自動判定）
- * @returns ステータスが更新された新しいレスポンス
- */
-export const withStatus = (
-  response: HttpResponse,
-  statusCode: number,
-  reasonPhrase?: string,
-): HttpResponse => ({
-  ...response,
-  statusCode,
-  reasonPhrase: reasonPhrase ?? getReasonPhrase(statusCode),
-});
-
-/**
- * ヘッダーを追加・更新した新しいレスポンスを返す
- *
- * @param response - 元のレスポンス
- * @param key - ヘッダーキー
- * @param value - ヘッダー値
- * @returns ヘッダーが更新された新しいレスポンス
- */
-export const withHeader = (
-  response: HttpResponse,
-  key: string,
-  value: string | readonly string[],
-): HttpResponse => ({
-  ...response,
-  headers: setHeaderInHeaders(response.headers, key, value),
-});
-
-/**
- * ヘッダーを削除した新しいレスポンスを返す
- *
- * @param response - 元のレスポンス
- * @param key - 削除するヘッダーキー
- * @returns ヘッダーが削除された新しいレスポンス
- */
-export const withoutHeader = (response: HttpResponse, key: string): HttpResponse => {
-  const newHeaders = removeHeaderFromHeaders(response.headers, key);
-
-  // ヘッダーが変更されなかった場合は元のオブジェクトを返す
-  if (newHeaders === response.headers) {
-    return response;
-  }
-
-  return {
-    ...response,
-    headers: newHeaders,
-  };
-};
-
-/**
- * ボディを変更した新しいレスポンスを返す
- *
- * @param response - 元のレスポンス
- * @param body - 新しいボディ
- * @returns ボディが更新された新しいレスポンス
- */
-export const withBody = (response: HttpResponse, body: HttpBodyStream | null): HttpResponse => ({
-  ...response,
-  body,
-});
-
-/**
- * HTTP バージョンを変更した新しいレスポンスを返す
- *
- * @param response - 元のレスポンス
- * @param version - 新しい HTTP バージョン
- * @returns バージョンが更新された新しいレスポンス
- */
-export const withVersion = (response: HttpResponse, version: string): HttpResponse => ({
-  ...response,
-  version,
-});
-
-/**
- * ヘッダー値を取得する（大文字小文字を区別しない）
- *
- * @param response - 検索対象のレスポンス
- * @param key - 取得したいヘッダーキー
- * @returns 見つかったヘッダー値。存在しない場合は undefined
- */
-export const getHeader = (
-  response: HttpResponse,
-  key: string,
-): string | readonly string[] | undefined => getHeaderFromHeaders(response.headers, key);
-
-/**
- * ヘッダーの存在を確認する（大文字小文字を区別しない）
- *
- * @param response - 検査対象のレスポンス
- * @param key - 存在確認したいヘッダーキー
- * @returns 指定したヘッダーが存在する場合は true
- */
-export const hasHeader = (response: HttpResponse, key: string): boolean =>
-  hasHeaderInHeaders(response.headers, key);
-
-/**
- * ヘッダー値を単一の文字列として取得する
- * 配列の場合はカンマ区切りで結合する
- *
- * @param response - 検索対象のレスポンス
- * @param key - 取得したいヘッダーキー
- * @returns ヘッダー値の文字列。存在しない場合は空文字列
- */
-export const getHeaderLine = (response: HttpResponse, key: string): string => {
-  const value = getHeaderFromHeaders(response.headers, key);
-
-  if (value === undefined) {
-    return '';
-  }
-
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  // 配列の場合はカンマ区切りで結合
-  return value.join(HEADER_LINE_SEPARATOR);
-};

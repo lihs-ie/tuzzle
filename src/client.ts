@@ -3,12 +3,13 @@
  */
 
 import type { Method } from './method';
-import type { HttpHeaders } from './message/headers';
+import type { HeaderValue } from './message/headers';
+import { HttpHeaders } from './message/headers';
 import type { HttpRequest } from './message/request';
 import { HttpRequest as createHttpRequest } from './message/request';
 import type { HttpResponse } from './message/response';
 import type { HandlerStack, RequestOptions } from './handler/stack';
-import { HandlerStack as createHandlerStack, setHandler, resolve } from './handler/stack';
+import { HandlerStack as createHandlerStack } from './handler/stack';
 import { FetchHandler } from './handler/fetch';
 
 /**
@@ -17,7 +18,7 @@ import { FetchHandler } from './handler/fetch';
 export type ClientConfig = {
   readonly baseURL?: string;
   readonly timeout?: number;
-  readonly headers?: HttpHeaders;
+  readonly headers?: Readonly<Record<string, HeaderValue>>;
   readonly allowRedirects?: boolean;
   readonly httpErrors?: boolean;
   readonly handlerStack?: HandlerStack;
@@ -60,15 +61,29 @@ const mergeOptions = (
   clientConfig: ClientConfig,
   requestOptions: RequestOptions,
 ): RequestOptions => {
+  const mergedHeaders: Record<string, HeaderValue> = {
+    ...(clientConfig.headers ?? {}),
+    ...(requestOptions.headers ?? {}),
+  };
+
   return {
     ...clientConfig,
     ...requestOptions,
-    headers: {
-      ...(clientConfig.headers ?? {}),
-      ...(requestOptions.headers ?? {}),
-    },
+    headers: mergedHeaders,
   };
 };
+
+export interface HttpClient {
+  request: (method: Method, uri: string, options?: RequestOptions) => Promise<HttpResponse>;
+  get: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
+  post: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
+  put: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
+  delete: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
+  patch: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
+  head: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
+  options: (uri: string, requestOptions?: RequestOptions) => Promise<HttpResponse>;
+  getConfig: () => Readonly<ClientConfig>;
+}
 
 /**
  * HTTP クライアントを生成する
@@ -82,19 +97,7 @@ const mergeOptions = (
  * const response = await client.get('/users');
  * ```
  */
-export const HttpClient = (
-  config?: Partial<ClientConfig>,
-): {
-  request: (method: Method, uri: string, options?: RequestOptions) => Promise<HttpResponse>;
-  get: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
-  post: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
-  put: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
-  delete: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
-  patch: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
-  head: (uri: string, options?: RequestOptions) => Promise<HttpResponse>;
-  options: (uri: string, requestOptions?: RequestOptions) => Promise<HttpResponse>;
-  getConfig: () => Readonly<ClientConfig>;
-} => {
+export const HttpClient = (config?: Partial<ClientConfig>): HttpClient => {
   // デフォルト設定
   const clientConfig: ClientConfig = {
     baseURL: config?.baseURL,
@@ -108,10 +111,10 @@ export const HttpClient = (
   // ハンドラースタックの準備
   let stack = clientConfig.handlerStack ?? createHandlerStack();
   if (!clientConfig.handlerStack) {
-    stack = setHandler(stack, FetchHandler());
+    stack = stack.setHandler(FetchHandler());
   }
 
-  const handler = resolve(stack);
+  const handler = stack.resolve();
 
   /**
    * 汎用リクエストメソッド
@@ -130,7 +133,7 @@ export const HttpClient = (
     const mergedOptions = mergeOptions(clientConfig, options);
 
     const httpRequest: HttpRequest = createHttpRequest(method, fullUri, {
-      headers: mergedOptions.headers ?? {},
+      headers: HttpHeaders(mergedOptions.headers),
       body: null,
     });
 
@@ -235,8 +238,3 @@ export const HttpClient = (
     getConfig,
   };
 };
-
-/**
- * HttpClient 生成関数の戻り値型
- */
-export type HttpClient = ReturnType<typeof HttpClient>;

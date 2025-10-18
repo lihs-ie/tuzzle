@@ -13,12 +13,4 @@ export {
   validateSetCookie,
 } from './set.js';
 
-export type { CookieJar } from './jar.js';
-export {
-  CookieJar as createCookieJar,
-  addCookie,
-  removeCookie,
-  getCookiesForRequest,
-  extractCookiesFromResponse,
-  addCookieHeaderToRequest,
-} from './jar.js';
+export { CookieJar } from './jar.js';

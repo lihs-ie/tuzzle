@@ -4,26 +4,31 @@
 
 import type { Method } from '../method';
 import type { HttpBodyStream } from './stream';
-import {
-  setHeader as setHeaderInHeaders,
-  removeHeader as removeHeaderFromHeaders,
-  getHeader as getHeaderFromHeaders,
-  hasHeader as hasHeaderInHeaders,
-  type HttpHeaders,
-} from './headers';
+import { HttpHeaders } from './headers';
+import type { HttpHeaders as HttpHeadersType } from './headers';
 
 const DEFAULT_HTTP_VERSION = '1.1';
 
 /**
  * HTTP リクエストの型
  */
-export type HttpRequest = {
+export interface HttpRequest {
   readonly method: Method;
   readonly uri: string;
-  readonly headers: HttpHeaders;
+  readonly headers: HttpHeadersType;
   readonly body: HttpBodyStream | null;
   readonly version: string;
-};
+
+  // メソッドスタイル
+  readonly withMethod: (method: Method) => HttpRequest;
+  readonly withUri: (uri: string) => HttpRequest;
+  readonly withHeader: (key: string, value: string | readonly string[]) => HttpRequest;
+  readonly withoutHeader: (key: string) => HttpRequest;
+  readonly withBody: (body: HttpBodyStream | null) => HttpRequest;
+  readonly withVersion: (version: string) => HttpRequest;
+  readonly getHeader: (key: string) => string | readonly string[] | undefined;
+  readonly hasHeader: (key: string) => boolean;
+}
 
 /**
  * 新しい HTTP リクエストを生成する
@@ -36,119 +41,85 @@ export type HttpRequest = {
 export const HttpRequest = (
   method: Method,
   uri: string,
-  options?: Partial<Omit<HttpRequest, 'method' | 'uri'>>,
+  options?: Partial<
+    Omit<
+      HttpRequest,
+      | 'method'
+      | 'uri'
+      | 'withMethod'
+      | 'withUri'
+      | 'withHeader'
+      | 'withoutHeader'
+      | 'withBody'
+      | 'withVersion'
+      | 'getHeader'
+      | 'hasHeader'
+    >
+  >,
 ): HttpRequest => ({
   method,
   uri,
-  headers: options?.headers ?? {},
+  headers: options?.headers ?? HttpHeaders(),
   body: options?.body ?? null,
   version: options?.version ?? DEFAULT_HTTP_VERSION,
+
+  withMethod(newMethod: Method): HttpRequest {
+    return HttpRequest(newMethod, this.uri, {
+      headers: this.headers,
+      body: this.body,
+      version: this.version,
+    });
+  },
+
+  withUri(newUri: string): HttpRequest {
+    return HttpRequest(this.method, newUri, {
+      headers: this.headers,
+      body: this.body,
+      version: this.version,
+    });
+  },
+
+  withHeader(key: string, value: string | readonly string[]): HttpRequest {
+    return HttpRequest(this.method, this.uri, {
+      headers: this.headers.set(key, value),
+      body: this.body,
+      version: this.version,
+    });
+  },
+
+  withoutHeader(key: string): HttpRequest {
+    const newHeaders = this.headers.remove(key);
+    if (newHeaders === this.headers) {
+      return this;
+    }
+    return HttpRequest(this.method, this.uri, {
+      headers: newHeaders,
+      body: this.body,
+      version: this.version,
+    });
+  },
+
+  withBody(newBody: HttpBodyStream | null): HttpRequest {
+    return HttpRequest(this.method, this.uri, {
+      headers: this.headers,
+      body: newBody,
+      version: this.version,
+    });
+  },
+
+  withVersion(newVersion: string): HttpRequest {
+    return HttpRequest(this.method, this.uri, {
+      headers: this.headers,
+      body: this.body,
+      version: newVersion,
+    });
+  },
+
+  getHeader(key: string): string | readonly string[] | undefined {
+    return this.headers.get(key);
+  },
+
+  hasHeader(key: string): boolean {
+    return this.headers.has(key);
+  },
 });
-
-/**
- * メソッドを変更した新しいリクエストを返す
- *
- * @param request - 元のリクエスト
- * @param method - 新しい HTTP メソッド
- * @returns メソッドが更新された新しいリクエスト
- */
-export const withMethod = (request: HttpRequest, method: Method): HttpRequest => ({
-  ...request,
-  method,
-});
-
-/**
- * URI を変更した新しいリクエストを返す
- *
- * @param request - 元のリクエスト
- * @param uri - 新しい URI
- * @returns URI が更新された新しいリクエスト
- */
-export const withUri = (request: HttpRequest, uri: string): HttpRequest => ({
-  ...request,
-  uri,
-});
-
-/**
- * ヘッダーを追加・更新した新しいリクエストを返す
- *
- * @param request - 元のリクエスト
- * @param key - ヘッダーキー
- * @param value - ヘッダー値
- * @returns ヘッダーが更新された新しいリクエスト
- */
-export const withHeader = (
-  request: HttpRequest,
-  key: string,
-  value: string | readonly string[],
-): HttpRequest => ({
-  ...request,
-  headers: setHeaderInHeaders(request.headers, key, value),
-});
-
-/**
- * ヘッダーを削除した新しいリクエストを返す
- *
- * @param request - 元のリクエスト
- * @param key - 削除するヘッダーキー
- * @returns ヘッダーが削除された新しいリクエスト
- */
-export const withoutHeader = (request: HttpRequest, key: string): HttpRequest => {
-  const newHeaders = removeHeaderFromHeaders(request.headers, key);
-
-  // ヘッダーが変更されなかった場合は元のオブジェクトを返す
-  if (newHeaders === request.headers) {
-    return request;
-  }
-
-  return {
-    ...request,
-    headers: newHeaders,
-  };
-};
-
-/**
- * ボディを変更した新しいリクエストを返す
- *
- * @param request - 元のリクエスト
- * @param body - 新しいボディ
- * @returns ボディが更新された新しいリクエスト
- */
-export const withBody = (request: HttpRequest, body: HttpBodyStream | null): HttpRequest => ({
-  ...request,
-  body,
-});
-
-/**
- * HTTP バージョンを変更した新しいリクエストを返す
- *
- * @param request - 元のリクエスト
- * @param version - 新しい HTTP バージョン
- * @returns バージョンが更新された新しいリクエスト
- */
-export const withVersion = (request: HttpRequest, version: string): HttpRequest => ({
-  ...request,
-  version,
-});
-
-/**
- * ヘッダー値を取得する（大文字小文字を区別しない）
- *
- * @param request - 検索対象のリクエスト
- * @param key - 取得したいヘッダーキー
- * @returns 見つかったヘッダー値。存在しない場合は undefined
- */
-export const getHeader = (
-  request: HttpRequest,
-  key: string,
-): string | readonly string[] | undefined => getHeaderFromHeaders(request.headers, key);
-
-/**
- * ヘッダーの存在を確認する（大文字小文字を区別しない）
- *
- * @param request - 検査対象のリクエスト
- * @param key - 存在確認したいヘッダーキー
- * @returns 指定したヘッダーが存在する場合は true
- */
-export const hasHeader = (request: HttpRequest, key: string): boolean =>
-  hasHeaderInHeaders(request.headers, key);

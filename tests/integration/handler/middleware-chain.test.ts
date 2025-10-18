@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { HttpRequest } from '../../../src/message/request';
+import { HttpRequest } from '../../../src/message/request';
 import type { HttpResponse } from '../../../src/message/response';
-import { HandlerStack, setHandler, push, resolve } from '../../../src/handler/stack';
+import { HandlerStack } from '../../../src/handler/stack';
 import { mapRequest, mapResponse } from '../../../src/middleware/index';
 import { FetchHandler } from '../../../src/handler/fetch';
+import { Method } from '../../../src/method';
 
 // グローバル fetch のモック
 const mockFetch = vi.fn();
@@ -43,7 +44,7 @@ describe('Middleware Chain Integration', () => {
       executionOrder.push('add-auth');
       return {
         ...request,
-        headers: { ...request.headers, Authorization: 'Bearer token' },
+        headers: request.headers.set('Authorization', 'Bearer token'),
       };
     });
 
@@ -52,18 +53,18 @@ describe('Middleware Chain Integration', () => {
       executionOrder.push('add-response-header');
       return {
         ...response,
-        headers: { ...response.headers, 'X-Processed': 'true' },
+        headers: response.headers.set('X-Processed', 'true'),
       };
     });
 
     // ハンドラースタックの構築
     let stack = HandlerStack();
-    stack = setHandler(stack, FetchHandler());
-    stack = push(stack, addAuthHeader, 'auth');
-    stack = push(stack, addResponseHeader, 'response-header');
+    stack = stack.setHandler(FetchHandler());
+    stack = stack.push(addAuthHeader, 'auth');
+    stack = stack.push(addResponseHeader, 'response-header');
 
     // スタックの解決
-    const handler = resolve(stack);
+    const handler = stack.resolve();
 
     // モックの設定
     mockFetch.mockResolvedValue(
@@ -71,13 +72,7 @@ describe('Middleware Chain Integration', () => {
     );
 
     // リクエストの実行
-    const request: HttpRequest = {
-      method: 'GET',
-      uri: 'https://api.example.com/data',
-      headers: {},
-      body: null,
-      version: '1.1',
-    };
+    const request = HttpRequest(Method.GET, 'https://api.example.com/data');
 
     const response = await handler(request, {});
 
@@ -95,7 +90,7 @@ describe('Middleware Chain Integration', () => {
     );
 
     // レスポンスヘッダーが追加されていることを確認
-    expect(response.headers['X-Processed']).toBe('true');
+    expect(response.headers.get('X-Processed')).toBe('true');
     expect(response.statusCode).toBe(200);
   });
 
@@ -103,41 +98,35 @@ describe('Middleware Chain Integration', () => {
     const addHeader1 = mapRequest(
       (request: HttpRequest): HttpRequest => ({
         ...request,
-        headers: { ...request.headers, 'X-Header-1': 'value1' },
+        headers: request.headers.set('X-Header-1', 'value1'),
       }),
     );
 
     const addHeader2 = mapRequest(
       (request: HttpRequest): HttpRequest => ({
         ...request,
-        headers: { ...request.headers, 'X-Header-2': 'value2' },
+        headers: request.headers.set('X-Header-2', 'value2'),
       }),
     );
 
     const addHeader3 = mapRequest(
       (request: HttpRequest): HttpRequest => ({
         ...request,
-        headers: { ...request.headers, 'X-Header-3': 'value3' },
+        headers: request.headers.set('X-Header-3', 'value3'),
       }),
     );
 
     let stack = HandlerStack();
-    stack = setHandler(stack, FetchHandler());
-    stack = push(stack, addHeader1, 'h1');
-    stack = push(stack, addHeader2, 'h2');
-    stack = push(stack, addHeader3, 'h3');
+    stack = stack.setHandler(FetchHandler());
+    stack = stack.push(addHeader1, 'h1');
+    stack = stack.push(addHeader2, 'h2');
+    stack = stack.push(addHeader3, 'h3');
 
-    const handler = resolve(stack);
+    const handler = stack.resolve();
 
     mockFetch.mockResolvedValue(createMockResponse(200, 'OK', {}, ''));
 
-    const request: HttpRequest = {
-      method: 'GET',
-      uri: 'https://example.com',
-      headers: {},
-      body: null,
-      version: '1.1',
-    };
+    const request = HttpRequest(Method.GET, 'https://example.com');
 
     await handler(request, {});
 
@@ -158,63 +147,51 @@ describe('Middleware Chain Integration', () => {
     const modifyStatus = mapResponse(
       (response: HttpResponse): HttpResponse => ({
         ...response,
-        headers: { ...response.headers, 'X-Middleware-1': 'applied' },
+        headers: response.headers.set('X-Middleware-1', 'applied'),
       }),
     );
 
     const addCustomHeader = mapResponse(
       (response: HttpResponse): HttpResponse => ({
         ...response,
-        headers: { ...response.headers, 'X-Middleware-2': 'applied' },
+        headers: response.headers.set('X-Middleware-2', 'applied'),
       }),
     );
 
     let stack = HandlerStack();
-    stack = setHandler(stack, FetchHandler());
-    stack = push(stack, modifyStatus, 'm1');
-    stack = push(stack, addCustomHeader, 'm2');
+    stack = stack.setHandler(FetchHandler());
+    stack = stack.push(modifyStatus, 'm1');
+    stack = stack.push(addCustomHeader, 'm2');
 
-    const handler = resolve(stack);
+    const handler = stack.resolve();
 
     mockFetch.mockResolvedValue(
       createMockResponse(200, 'OK', { 'X-Original': 'header' }, 'response body'),
     );
 
-    const request: HttpRequest = {
-      method: 'GET',
-      uri: 'https://example.com',
-      headers: {},
-      body: null,
-      version: '1.1',
-    };
+    const request = HttpRequest(Method.GET, 'https://example.com');
 
     const response = await handler(request, {});
 
     // オリジナルのヘッダーが保持されている
-    expect(response.headers['X-Original']).toBe('header');
+    expect(response.headers.get('X-Original')).toBe('header');
     // 両方のミドルウェアが適用されている
-    expect(response.headers['X-Middleware-1']).toBe('applied');
-    expect(response.headers['X-Middleware-2']).toBe('applied');
+    expect(response.headers.get('X-Middleware-1')).toBe('applied');
+    expect(response.headers.get('X-Middleware-2')).toBe('applied');
   });
 
   it('should pass options through middleware chain', async () => {
     const checkOptions = mapRequest((request: HttpRequest): HttpRequest => request);
 
     let stack = HandlerStack();
-    stack = setHandler(stack, FetchHandler());
-    stack = push(stack, checkOptions, 'check');
+    stack = stack.setHandler(FetchHandler());
+    stack = stack.push(checkOptions, 'check');
 
-    const handler = resolve(stack);
+    const handler = stack.resolve();
 
     mockFetch.mockResolvedValue(createMockResponse(200, 'OK', {}, ''));
 
-    const request: HttpRequest = {
-      method: 'GET',
-      uri: 'https://example.com',
-      headers: {},
-      body: null,
-      version: '1.1',
-    };
+    const request = HttpRequest(Method.GET, 'https://example.com');
 
     const options = { timeout: 5000, customOption: 'test' };
     await handler(request, options);
@@ -231,25 +208,19 @@ describe('Middleware Chain Integration', () => {
 
   it('should work with empty middleware stack', async () => {
     let stack = HandlerStack();
-    stack = setHandler(stack, FetchHandler());
+    stack = stack.setHandler(FetchHandler());
 
-    const handler = resolve(stack);
+    const handler = stack.resolve();
 
     mockFetch.mockResolvedValue(
       createMockResponse(200, 'OK', { 'Content-Type': 'text/plain' }, 'Hello'),
     );
 
-    const request: HttpRequest = {
-      method: 'GET',
-      uri: 'https://example.com',
-      headers: {},
-      body: null,
-      version: '1.1',
-    };
+    const request = HttpRequest(Method.GET, 'https://example.com');
 
     const response = await handler(request, {});
 
     expect(response.statusCode).toBe(200);
-    expect(response.headers['Content-Type']).toBe('text/plain');
+    expect(response.headers.get('Content-Type')).toBe('text/plain');
   });
 });

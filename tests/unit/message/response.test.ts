@@ -1,16 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  HttpResponse,
-  withStatus,
-  withHeader,
-  withoutHeader,
-  withBody,
-  withVersion,
-  getHeader,
-  hasHeader,
-  getHeaderLine,
-} from '../../../src/message/response';
+import { HttpResponse } from '../../../src/message/response';
 import { HttpBodyStream } from '../../../src/message/stream';
+import { HttpHeaders } from '../../../src/message/headers';
 
 describe('HttpResponse', () => {
   it('should create response with minimal parameters', () => {
@@ -18,14 +9,14 @@ describe('HttpResponse', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.reasonPhrase).toBe('OK');
-    expect(response.headers).toEqual({});
+    expect(response.headers.data).toEqual({});
     expect(response.body).toBeNull();
     expect(response.version).toBe('1.1');
   });
 
   it('should create response with all options', () => {
     const body = HttpBodyStream('response body');
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = HttpHeaders({ 'Content-Type': 'application/json' });
 
     const response = HttpResponse(201, {
       reasonPhrase: 'Created',
@@ -53,7 +44,7 @@ describe('HttpResponse', () => {
 describe('withStatus', () => {
   it('should update status code and derive reason phrase', () => {
     const original = HttpResponse(200);
-    const updated = withStatus(original, 404);
+    const updated = original.withStatus(404);
 
     expect(updated.statusCode).toBe(404);
     expect(updated.reasonPhrase).toBe('Not Found');
@@ -62,7 +53,7 @@ describe('withStatus', () => {
 
   it('should allow custom reason phrase', () => {
     const original = HttpResponse(200);
-    const updated = withStatus(original, 418, 'I am a teapot');
+    const updated = original.withStatus(418, 'I am a teapot');
 
     expect(updated.statusCode).toBe(418);
     expect(updated.reasonPhrase).toBe('I am a teapot');
@@ -70,7 +61,7 @@ describe('withStatus', () => {
 
   it('should use empty reason phrase for unknown status codes', () => {
     const original = HttpResponse(200);
-    const updated = withStatus(original, 999);
+    const updated = original.withStatus(999);
 
     expect(updated.statusCode).toBe(999);
     expect(updated.reasonPhrase).toBe('');
@@ -80,46 +71,46 @@ describe('withStatus', () => {
 describe('withHeader', () => {
   it('should add new header without mutating original', () => {
     const original = HttpResponse(200);
-    const updated = withHeader(original, 'Content-Type', 'application/json');
+    const updated = original.withHeader('Content-Type', 'application/json');
 
-    expect(updated.headers['Content-Type']).toBe('application/json');
+    expect(updated.headers.get('Content-Type')).toBe('application/json');
     expect(updated).not.toBe(original);
-    expect(original.headers['Content-Type']).toBeUndefined();
+    expect(original.headers.get('Content-Type')).toBeUndefined();
   });
 
   it('should update existing header case-insensitively', () => {
     const original = HttpResponse(200, {
-      headers: { 'Content-Type': 'text/plain' },
+      headers: HttpHeaders({ 'Content-Type': 'text/plain' }),
     });
-    const updated = withHeader(original, 'content-type', 'application/json');
+    const updated = original.withHeader('content-type', 'application/json');
 
-    expect(updated.headers['Content-Type']).toBe('application/json');
-    expect(Object.keys(updated.headers)).toEqual(['Content-Type']);
+    expect(updated.headers.get('Content-Type')).toBe('application/json');
+    expect(Object.keys(updated.headers.data)).toEqual(['Content-Type']);
   });
 
   it('should support array values', () => {
     const original = HttpResponse(200);
-    const updated = withHeader(original, 'Set-Cookie', ['a=1', 'b=2']);
+    const updated = original.withHeader('Set-Cookie', ['a=1', 'b=2']);
 
-    expect(updated.headers['Set-Cookie']).toEqual(['a=1', 'b=2']);
+    expect(updated.headers.get('Set-Cookie')).toEqual(['a=1', 'b=2']);
   });
 });
 
 describe('withoutHeader', () => {
   it('should remove header case-insensitively', () => {
     const original = HttpResponse(200, {
-      headers: { 'Content-Type': 'application/json', 'X-Custom': 'value' },
+      headers: HttpHeaders({ 'Content-Type': 'application/json', 'X-Custom': 'value' }),
     });
-    const updated = withoutHeader(original, 'content-type');
+    const updated = original.withoutHeader('content-type');
 
-    expect(updated.headers['Content-Type']).toBeUndefined();
-    expect(updated.headers['X-Custom']).toBe('value');
+    expect(updated.headers.get('Content-Type')).toBeUndefined();
+    expect(updated.headers.get('X-Custom')).toBe('value');
     expect(updated).not.toBe(original);
   });
 
   it('should return same object when header does not exist', () => {
     const original = HttpResponse(200);
-    const updated = withoutHeader(original, 'X-Custom');
+    const updated = original.withoutHeader('X-Custom');
 
     expect(updated).toBe(original);
   });
@@ -129,7 +120,7 @@ describe('withBody', () => {
   it('should update body without mutating original', () => {
     const original = HttpResponse(200);
     const body = HttpBodyStream('new body');
-    const updated = withBody(original, body);
+    const updated = original.withBody(body);
 
     expect(updated.body).toBe(body);
     expect(updated).not.toBe(original);
@@ -139,7 +130,7 @@ describe('withBody', () => {
   it('should allow setting body to null', () => {
     const body = HttpBodyStream('test');
     const original = HttpResponse(200, { body });
-    const updated = withBody(original, null);
+    const updated = original.withBody(null);
 
     expect(updated.body).toBeNull();
   });
@@ -148,7 +139,7 @@ describe('withBody', () => {
 describe('withVersion', () => {
   it('should update version without mutating original', () => {
     const original = HttpResponse(200);
-    const updated = withVersion(original, '2.0');
+    const updated = original.withVersion('2.0');
 
     expect(updated.version).toBe('2.0');
     expect(updated).not.toBe(original);
@@ -159,68 +150,68 @@ describe('withVersion', () => {
 describe('getHeader', () => {
   it('should retrieve header case-insensitively', () => {
     const response = HttpResponse(200, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: HttpHeaders({ 'Content-Type': 'application/json' }),
     });
 
-    expect(getHeader(response, 'content-type')).toBe('application/json');
-    expect(getHeader(response, 'CONTENT-TYPE')).toBe('application/json');
-    expect(getHeader(response, 'Content-Type')).toBe('application/json');
+    expect(response.getHeader('content-type')).toBe('application/json');
+    expect(response.getHeader('CONTENT-TYPE')).toBe('application/json');
+    expect(response.getHeader('Content-Type')).toBe('application/json');
   });
 
   it('should return undefined for missing header', () => {
     const response = HttpResponse(200);
-    expect(getHeader(response, 'X-Custom')).toBeUndefined();
+    expect(response.getHeader('X-Custom')).toBeUndefined();
   });
 
   it('should return array values as-is', () => {
     const response = HttpResponse(200, {
-      headers: { 'Set-Cookie': ['a=1', 'b=2'] },
+      headers: HttpHeaders({ 'Set-Cookie': ['a=1', 'b=2'] }),
     });
 
-    expect(getHeader(response, 'set-cookie')).toEqual(['a=1', 'b=2']);
+    expect(response.getHeader('set-cookie')).toEqual(['a=1', 'b=2']);
   });
 });
 
 describe('hasHeader', () => {
   it('should check header existence case-insensitively', () => {
     const response = HttpResponse(200, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: HttpHeaders({ 'Content-Type': 'application/json' }),
     });
 
-    expect(hasHeader(response, 'content-type')).toBe(true);
-    expect(hasHeader(response, 'CONTENT-TYPE')).toBe(true);
-    expect(hasHeader(response, 'X-Custom')).toBe(false);
+    expect(response.hasHeader('content-type')).toBe(true);
+    expect(response.hasHeader('CONTENT-TYPE')).toBe(true);
+    expect(response.hasHeader('X-Custom')).toBe(false);
   });
 });
 
 describe('getHeaderLine', () => {
   it('should return string header as-is', () => {
     const response = HttpResponse(200, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: HttpHeaders({ 'Content-Type': 'application/json' }),
     });
 
-    expect(getHeaderLine(response, 'content-type')).toBe('application/json');
+    expect(response.getHeaderLine('content-type')).toBe('application/json');
   });
 
   it('should join array headers with comma and space', () => {
     const response = HttpResponse(200, {
-      headers: { Accept: ['application/json', 'text/html', 'text/plain'] },
+      headers: HttpHeaders({ Accept: ['application/json', 'text/html', 'text/plain'] }),
     });
 
-    expect(getHeaderLine(response, 'accept')).toBe('application/json, text/html, text/plain');
+    expect(response.getHeaderLine('accept')).toBe('application/json, text/html, text/plain');
   });
 
   it('should return empty string for missing header', () => {
     const response = HttpResponse(200);
-    expect(getHeaderLine(response, 'X-Custom')).toBe('');
+    expect(response.getHeaderLine('X-Custom')).toBe('');
   });
 
   it('should handle case-insensitive lookup', () => {
     const response = HttpResponse(200, {
-      headers: { 'Content-Type': 'text/plain' },
+      headers: HttpHeaders({ 'Content-Type': 'text/plain' }),
     });
 
-    expect(getHeaderLine(response, 'content-type')).toBe('text/plain');
-    expect(getHeaderLine(response, 'CONTENT-TYPE')).toBe('text/plain');
+    expect(response.getHeaderLine('content-type')).toBe('text/plain');
+    expect(response.getHeaderLine('CONTENT-TYPE')).toBe('text/plain');
   });
 });

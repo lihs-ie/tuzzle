@@ -1,28 +1,16 @@
 /**
  * 使用可能な HTTP メソッドの集合
  */
-export type Method =
-  | 'GET'
-  | 'HEAD'
-  | 'POST'
-  | 'PUT'
-  | 'DELETE'
-  | 'CONNECT'
-  | 'OPTIONS'
-  | 'TRACE'
-  | 'PATCH';
+export const Method = {
+  GET: 'GET',
+  HEAD: 'HEAD',
+  POST: 'POST',
+  PUT: 'PUT',
+  DELETE: 'DELETE',
+  CONNECT: 'CONNECT',
+  OPTIONS: 'OPTIONS',
+  TRACE: 'TRACE',
+  PATCH: 'PATCH',
+} as const;
 
-/**
- * HTTP メソッドのリスト
- */
-export const HTTP_METHODS: readonly Method[] = [
-  'GET',
-  'HEAD',
-  'POST',
-  'PUT',
-  'DELETE',
-  'CONNECT',
-  'OPTIONS',
-  'TRACE',
-  'PATCH',
-] as const;
+export type Method = (typeof Method)[keyof typeof Method];
