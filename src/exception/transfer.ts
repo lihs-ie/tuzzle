@@ -58,26 +58,6 @@ export const createTransferError = (
 export const isTransferError = isRequestError<TransferError>('TransferError');
 
 /**
- * Throws a TransferError as a JavaScript Error
- *
- * @param error - TransferError object
- * @throws JavaScript Error (with TransferError in cause)
- *
- * @example
- * ```typescript
- * const transferError = createTransferError('Network error', request);
- * throwTransferError(transferError);
- * ```
- */
-export const throwTransferError = (error: TransferError): never => {
-  const jsError = new Error(error.message, { cause: error });
-  if (error.stack) {
-    jsError.stack = error.stack;
-  }
-  throw jsError;
-};
-
-/**
  * Extracts a TransferError from a JavaScript Error
  *
  * @param error - JavaScript Error

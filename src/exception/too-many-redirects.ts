@@ -71,26 +71,6 @@ export const isTooManyRedirectsError = isRequestError<TooManyRedirectsError>(
 );
 
 /**
- * Throws a TooManyRedirectsError as a JavaScript Error
- *
- * @param error - TooManyRedirectsError object
- * @throws JavaScript Error (with TooManyRedirectsError in cause)
- *
- * @example
- * ```typescript
- * const error = createTooManyRedirectsError('Too many redirects', request, 10);
- * throwTooManyRedirectsError(error);
- * ```
- */
-export const throwTooManyRedirectsError = (error: TooManyRedirectsError): never => {
-  const jsError = new Error(error.message, { cause: error });
-  if (error.stack) {
-    jsError.stack = error.stack;
-  }
-  throw jsError;
-};
-
-/**
  * Extracts a TooManyRedirectsError from a JavaScript Error
  *
  * @param error - JavaScript Error

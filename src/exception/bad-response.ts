@@ -73,26 +73,6 @@ export const isBadResponseError = isRequestError<BadResponseError>(
 );
 
 /**
- * Throws a BadResponseError as a JavaScript Error
- *
- * @param error - BadResponseError object
- * @throws JavaScript Error (with BadResponseError in cause)
- *
- * @example
- * ```typescript
- * const badResponseError = createBadResponseError('HTTP error', request, response);
- * throwBadResponseError(badResponseError);
- * ```
- */
-export const throwBadResponseError = (error: BadResponseError): never => {
-  const jsError = new Error(error.message, { cause: error });
-  if (error.stack) {
-    jsError.stack = error.stack;
-  }
-  throw jsError;
-};
-
-/**
  * Extracts a BadResponseError from a JavaScript Error
  *
  * @param error - JavaScript Error

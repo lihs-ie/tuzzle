@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   createConnectError,
   isConnectError,
-  throwConnectError,
   extractConnectError,
 } from '../../../src/exception/connect.js';
 import type { ConnectError } from '../../../src/exception/connect.js';
+import { throwError } from '../../../src/exception/common.js';
 import type { HttpRequest } from '../../../src/message/request.js';
 import { HttpRequest as createHttpRequest } from '../../../src/message/request.js';
 
@@ -65,21 +65,21 @@ describe('ConnectError', () => {
     });
   });
 
-  describe('throwConnectError', () => {
+  describe('throwError', () => {
     it('should throw standard Error', () => {
       const connectError = createConnectError('Connection refused', mockRequest);
-      expect(() => throwConnectError(connectError)).toThrow(Error);
+      expect(() => throwError(connectError)).toThrow(Error);
     });
 
     it('should preserve message in thrown Error', () => {
       const connectError = createConnectError('Connection refused', mockRequest);
-      expect(() => throwConnectError(connectError)).toThrow('Connection refused');
+      expect(() => throwError(connectError)).toThrow('Connection refused');
     });
 
     it('should attach ConnectError as cause', () => {
       const connectError = createConnectError('Connection refused', mockRequest);
       try {
-        throwConnectError(connectError);
+        throwError(connectError);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         if (error instanceof Error) {
@@ -93,7 +93,7 @@ describe('ConnectError', () => {
     it('should extract ConnectError from Error', () => {
       const originalError = createConnectError('Connection refused', mockRequest);
       try {
-        throwConnectError(originalError);
+        throwError(originalError);
       } catch (error) {
         if (error instanceof Error) {
           const extracted = extractConnectError(error);

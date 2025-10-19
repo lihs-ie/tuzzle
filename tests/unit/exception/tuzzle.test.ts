@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   createTuzzleError,
   isTuzzleError,
-  throwTuzzleError,
   extractTuzzleError,
 } from '../../../src/exception/tuzzle.js';
 import type { TuzzleError } from '../../../src/exception/tuzzle.js';
+import { throwError } from '../../../src/exception/common.js';
 
 describe('TuzzleError', () => {
   describe('createTuzzleError', () => {
@@ -52,21 +52,21 @@ describe('TuzzleError', () => {
     });
   });
 
-  describe('throwTuzzleError', () => {
+  describe('throwError', () => {
     it('should throw standard Error', () => {
       const tuzzleError = createTuzzleError('Test error');
-      expect(() => throwTuzzleError(tuzzleError)).toThrow(Error);
+      expect(() => throwError(tuzzleError)).toThrow(Error);
     });
 
     it('should preserve message in thrown Error', () => {
       const tuzzleError = createTuzzleError('Test error message');
-      expect(() => throwTuzzleError(tuzzleError)).toThrow('Test error message');
+      expect(() => throwError(tuzzleError)).toThrow('Test error message');
     });
 
     it('should preserve stack trace in thrown Error', () => {
       const tuzzleError = createTuzzleError('Test error');
       try {
-        throwTuzzleError(tuzzleError);
+        throwError(tuzzleError);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         if (error instanceof Error) {
@@ -78,7 +78,7 @@ describe('TuzzleError', () => {
     it('should attach TuzzleError as cause', () => {
       const tuzzleError = createTuzzleError('Test error');
       try {
-        throwTuzzleError(tuzzleError);
+        throwError(tuzzleError);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         if (error instanceof Error) {
@@ -92,7 +92,7 @@ describe('TuzzleError', () => {
     it('should extract TuzzleError from Error', () => {
       const originalError = createTuzzleError('Original error');
       try {
-        throwTuzzleError(originalError);
+        throwError(originalError);
       } catch (error) {
         if (error instanceof Error) {
           const extracted = extractTuzzleError(error);

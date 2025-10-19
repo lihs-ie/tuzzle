@@ -4,8 +4,9 @@
  */
 
 import type { Middleware } from '../handler/stack.js';
-import { createClientError, throwClientError } from '../exception/client.js';
-import { createServerError, throwServerError } from '../exception/server.js';
+import { createClientError } from '../exception/client.js';
+import { createServerError } from '../exception/server.js';
+import { throwError } from '../exception/common.js';
 import { formatErrorMessage } from '../exception/formatter.js';
 
 /**
@@ -41,7 +42,7 @@ export const httpErrors = (): Middleware => {
         response,
       );
       const error = createClientError(message, request, response);
-      throwClientError(error);
+      throwError(error);
     }
 
     // 5xx Server errors
@@ -52,7 +53,7 @@ export const httpErrors = (): Middleware => {
         response,
       );
       const error = createServerError(message, request, response);
-      throwServerError(error);
+      throwError(error);
     }
 
     return response;

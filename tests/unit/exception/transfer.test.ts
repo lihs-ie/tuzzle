@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest';
 import {
   createTransferError,
   isTransferError,
-  throwTransferError,
   extractTransferError,
 } from '../../../src/exception/transfer.js';
 import type { TransferError } from '../../../src/exception/transfer.js';
 import type { HttpRequest } from '../../../src/message/request.js';
 import { HttpRequest as createHttpRequest } from '../../../src/message/request.js';
+import { throwError } from '../../../src/exception/common.js';
 
 describe('TransferError', () => {
   const mockRequest: HttpRequest = createHttpRequest('GET', 'https://example.com/api');
@@ -61,21 +61,21 @@ describe('TransferError', () => {
     });
   });
 
-  describe('throwTransferError', () => {
+  describe('throwError', () => {
     it('should throw standard Error', () => {
       const transferError = createTransferError('Transfer failed', mockRequest);
-      expect(() => throwTransferError(transferError)).toThrow(Error);
+      expect(() => throwError(transferError)).toThrow(Error);
     });
 
     it('should preserve message in thrown Error', () => {
       const transferError = createTransferError('Transfer failed', mockRequest);
-      expect(() => throwTransferError(transferError)).toThrow('Transfer failed');
+      expect(() => throwError(transferError)).toThrow('Transfer failed');
     });
 
     it('should attach TransferError as cause', () => {
       const transferError = createTransferError('Transfer failed', mockRequest);
       try {
-        throwTransferError(transferError);
+        throwError(transferError);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         if (error instanceof Error) {
@@ -89,7 +89,7 @@ describe('TransferError', () => {
     it('should extract TransferError from Error', () => {
       const originalError = createTransferError('Transfer failed', mockRequest);
       try {
-        throwTransferError(originalError);
+        throwError(originalError);
       } catch (error) {
         if (error instanceof Error) {
           const extracted = extractTransferError(error);

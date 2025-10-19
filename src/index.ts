@@ -28,51 +28,45 @@ export type { Handler, Middleware, TransferStats, RequestOptions } from './handl
 export { CookieJar } from './cookie/jar.js';
 export { parseSetCookie } from './cookie/set.js';
 
-// Exceptions
-export type { TuzzleError } from './exception/tuzzle.js';
+// Exceptions (re-export from exception/index.ts)
+export type {
+  TuzzleError,
+  TransferError,
+  ConnectError,
+  RequestError,
+  BadResponseError,
+  ClientError,
+  ServerError,
+  TooManyRedirectsError,
+} from './exception/index.js';
+
 export {
+  throwError,
   createTuzzleError,
   isTuzzleError,
-  throwTuzzleError,
   extractTuzzleError,
-} from './exception/tuzzle.js';
-
-export type { RequestError } from './exception/request.js';
-export {
-  createRequestError,
-  isRequestError,
-  throwRequestError,
-  extractRequestError,
-} from './exception/request.js';
-
-export type { ConnectError } from './exception/connect.js';
-export {
-  createConnectError,
-  isConnectError,
-  throwConnectError,
-  extractConnectError,
-} from './exception/connect.js';
-
-export type { ClientError } from './exception/client.js';
-export {
-  createClientError,
-  isClientError,
-  throwClientError,
-  extractClientError,
-} from './exception/client.js';
-
-export type { ServerError } from './exception/server.js';
-export {
-  createServerError,
-  isServerError,
-  throwServerError,
-  extractServerError,
-} from './exception/server.js';
-
-export type { TransferError } from './exception/transfer.js';
-export {
   createTransferError,
   isTransferError,
-  throwTransferError,
   extractTransferError,
-} from './exception/transfer.js';
+  createConnectError,
+  isConnectError,
+  extractConnectError,
+  createRequestError,
+  isRequestError,
+  extractRequestError,
+  createBadResponseError,
+  isBadResponseError,
+  extractBadResponseError,
+  createClientError,
+  isClientError,
+  extractClientError,
+  createServerError,
+  isServerError,
+  extractServerError,
+  createTooManyRedirectsError,
+  isTooManyRedirectsError,
+  extractTooManyRedirectsError,
+  formatErrorMessage,
+  summarizeBody,
+  summarizeBodyStream,
+} from './exception/index.js';

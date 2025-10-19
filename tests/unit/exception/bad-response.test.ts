@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   createBadResponseError,
   isBadResponseError,
-  throwBadResponseError,
   extractBadResponseError,
 } from '../../../src/exception/bad-response.js';
 import type { BadResponseError } from '../../../src/exception/bad-response.js';
+import { throwError } from '../../../src/exception/common.js';
 import type { HttpRequest } from '../../../src/message/request.js';
 import type { HttpResponse } from '../../../src/message/response.js';
 import { HttpRequest as createHttpRequest } from '../../../src/message/request.js';
@@ -86,21 +86,21 @@ describe('BadResponseError', () => {
     });
   });
 
-  describe('throwBadResponseError', () => {
+  describe('throwError', () => {
     it('should throw standard Error', () => {
       const badResponseError = createBadResponseError('HTTP error', mockRequest, mockResponse);
-      expect(() => throwBadResponseError(badResponseError)).toThrow(Error);
+      expect(() => throwError(badResponseError)).toThrow(Error);
     });
 
     it('should preserve message in thrown Error', () => {
       const badResponseError = createBadResponseError('HTTP error', mockRequest, mockResponse);
-      expect(() => throwBadResponseError(badResponseError)).toThrow('HTTP error');
+      expect(() => throwError(badResponseError)).toThrow('HTTP error');
     });
 
     it('should attach BadResponseError as cause', () => {
       const badResponseError = createBadResponseError('HTTP error', mockRequest, mockResponse);
       try {
-        throwBadResponseError(badResponseError);
+        throwError(badResponseError);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         if (error instanceof Error) {
@@ -114,7 +114,7 @@ describe('BadResponseError', () => {
     it('should extract BadResponseError from Error', () => {
       const originalError = createBadResponseError('HTTP error', mockRequest, mockResponse);
       try {
-        throwBadResponseError(originalError);
+        throwError(originalError);
       } catch (error) {
         if (error instanceof Error) {
           const extracted = extractBadResponseError(error);

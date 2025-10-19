@@ -58,26 +58,6 @@ export const createConnectError = (
 export const isConnectError = isRequestError<ConnectError>('ConnectError');
 
 /**
- * Throws a ConnectError as a JavaScript Error
- *
- * @param error - ConnectError object
- * @throws JavaScript Error (with ConnectError in cause)
- *
- * @example
- * ```typescript
- * const connectError = createConnectError('Connection refused', request);
- * throwConnectError(connectError);
- * ```
- */
-export const throwConnectError = (error: ConnectError): never => {
-  const jsError = new Error(error.message, { cause: error });
-  if (error.stack) {
-    jsError.stack = error.stack;
-  }
-  throw jsError;
-};
-
-/**
  * Extracts a ConnectError from a JavaScript Error
  *
  * @param error - JavaScript Error

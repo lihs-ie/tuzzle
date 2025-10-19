@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   createServerError,
   isServerError,
-  throwServerError,
   extractServerError,
 } from '../../../src/exception/server.js';
 import type { ServerError } from '../../../src/exception/server.js';
+import { throwError } from '../../../src/exception/common.js';
 import type { HttpRequest } from '../../../src/message/request.js';
 import type { HttpResponse } from '../../../src/message/response.js';
 import { HttpRequest as createHttpRequest } from '../../../src/message/request.js';
@@ -103,21 +103,21 @@ describe('ServerError', () => {
     });
   });
 
-  describe('throwServerError', () => {
+  describe('throwError', () => {
     it('should throw standard Error', () => {
       const serverError = createServerError('Internal server error', mockRequest, mockResponse);
-      expect(() => throwServerError(serverError)).toThrow(Error);
+      expect(() => throwError(serverError)).toThrow(Error);
     });
 
     it('should preserve message in thrown Error', () => {
       const serverError = createServerError('Internal server error', mockRequest, mockResponse);
-      expect(() => throwServerError(serverError)).toThrow('Internal server error');
+      expect(() => throwError(serverError)).toThrow('Internal server error');
     });
 
     it('should attach ServerError as cause', () => {
       const serverError = createServerError('Internal server error', mockRequest, mockResponse);
       try {
-        throwServerError(serverError);
+        throwError(serverError);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         if (error instanceof Error) {
@@ -131,7 +131,7 @@ describe('ServerError', () => {
     it('should extract ServerError from Error', () => {
       const originalError = createServerError('Internal server error', mockRequest, mockResponse);
       try {
-        throwServerError(originalError);
+        throwError(originalError);
       } catch (error) {
         if (error instanceof Error) {
           const extracted = extractServerError(error);

@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   createTooManyRedirectsError,
   isTooManyRedirectsError,
-  throwTooManyRedirectsError,
   extractTooManyRedirectsError,
 } from '../../../src/exception/too-many-redirects.js';
 import type { TooManyRedirectsError } from '../../../src/exception/too-many-redirects.js';
+import { throwError } from '../../../src/exception/common.js';
 import type { HttpRequest } from '../../../src/message/request.js';
 import { HttpRequest as createHttpRequest } from '../../../src/message/request.js';
 
@@ -104,14 +104,14 @@ describe('TooManyRedirectsError', () => {
     });
   });
 
-  describe('throwTooManyRedirectsError', () => {
+  describe('throwError', () => {
     it('should throw standard Error', () => {
       const tooManyRedirectsError = createTooManyRedirectsError(
         'Too many redirects',
         mockRequest,
         10,
       );
-      expect(() => throwTooManyRedirectsError(tooManyRedirectsError)).toThrow(Error);
+      expect(() => throwError(tooManyRedirectsError)).toThrow(Error);
     });
 
     it('should preserve message in thrown Error', () => {
@@ -120,7 +120,7 @@ describe('TooManyRedirectsError', () => {
         mockRequest,
         10,
       );
-      expect(() => throwTooManyRedirectsError(tooManyRedirectsError)).toThrow('Too many redirects');
+      expect(() => throwError(tooManyRedirectsError)).toThrow('Too many redirects');
     });
 
     it('should attach TooManyRedirectsError as cause', () => {
@@ -130,7 +130,7 @@ describe('TooManyRedirectsError', () => {
         10,
       );
       try {
-        throwTooManyRedirectsError(tooManyRedirectsError);
+        throwError(tooManyRedirectsError);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         if (error instanceof Error) {
@@ -144,7 +144,7 @@ describe('TooManyRedirectsError', () => {
     it('should extract TooManyRedirectsError from Error', () => {
       const originalError = createTooManyRedirectsError('Too many redirects', mockRequest, 10);
       try {
-        throwTooManyRedirectsError(originalError);
+        throwError(originalError);
       } catch (error) {
         if (error instanceof Error) {
           const extracted = extractTooManyRedirectsError(error);

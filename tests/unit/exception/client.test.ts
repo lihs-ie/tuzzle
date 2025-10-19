@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   createClientError,
   isClientError,
-  throwClientError,
   extractClientError,
 } from '../../../src/exception/client.js';
 import type { ClientError } from '../../../src/exception/client.js';
+import { throwError } from '../../../src/exception/common.js';
 import type { HttpRequest } from '../../../src/message/request.js';
 import type { HttpResponse } from '../../../src/message/response.js';
 import { HttpRequest as createHttpRequest } from '../../../src/message/request.js';
@@ -101,21 +101,21 @@ describe('ClientError', () => {
     });
   });
 
-  describe('throwClientError', () => {
+  describe('throwError', () => {
     it('should throw standard Error', () => {
       const clientError = createClientError('Not found', mockRequest, mockResponse);
-      expect(() => throwClientError(clientError)).toThrow(Error);
+      expect(() => throwError(clientError)).toThrow(Error);
     });
 
     it('should preserve message in thrown Error', () => {
       const clientError = createClientError('Not found', mockRequest, mockResponse);
-      expect(() => throwClientError(clientError)).toThrow('Not found');
+      expect(() => throwError(clientError)).toThrow('Not found');
     });
 
     it('should attach ClientError as cause', () => {
       const clientError = createClientError('Not found', mockRequest, mockResponse);
       try {
-        throwClientError(clientError);
+        throwError(clientError);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         if (error instanceof Error) {
@@ -129,7 +129,7 @@ describe('ClientError', () => {
     it('should extract ClientError from Error', () => {
       const originalError = createClientError('Not found', mockRequest, mockResponse);
       try {
-        throwClientError(originalError);
+        throwError(originalError);
       } catch (error) {
         if (error instanceof Error) {
           const extracted = extractClientError(error);

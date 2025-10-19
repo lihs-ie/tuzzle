@@ -55,27 +55,6 @@ export const createTuzzleError = (
 export const isTuzzleError = isError<TuzzleError>('TuzzleError');
 
 /**
- * Throw TuzzleError as a JavaScript Error
- * Conversion function for use with throw/catch syntax
- *
- * @param error - TuzzleError object
- * @throws JavaScript Error (with TuzzleError in cause)
- *
- * @example
- * ```typescript
- * const tuzzleError = createTuzzleError('Something went wrong');
- * throwTuzzleError(tuzzleError);
- * ```
- */
-export const throwTuzzleError = (error: TuzzleError): never => {
-  const jsError = new Error(error.message, { cause: error });
-  if (error.stack) {
-    jsError.stack = error.stack;
-  }
-  throw jsError;
-};
-
-/**
  * Extract TuzzleError from JavaScript Error
  * Retrieve original TuzzleError from the cause of a thrown Error
  *

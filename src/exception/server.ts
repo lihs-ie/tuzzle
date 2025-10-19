@@ -69,26 +69,6 @@ export const isServerError = isRequestError<ServerError>('ServerError', (candida
 });
 
 /**
- * Throws a ServerError as a JavaScript Error
- *
- * @param error - ServerError object
- * @throws JavaScript Error (with ServerError in cause)
- *
- * @example
- * ```typescript
- * const serverError = createServerError('Internal server error', request, response);
- * throwServerError(serverError);
- * ```
- */
-export const throwServerError = (error: ServerError): never => {
-  const jsError = new Error(error.message, { cause: error });
-  if (error.stack) {
-    jsError.stack = error.stack;
-  }
-  throw jsError;
-};
-
-/**
  * Extracts a ServerError from a JavaScript Error
  *
  * @param error - JavaScript Error

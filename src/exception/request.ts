@@ -59,26 +59,6 @@ export const createRequestError = (
 export const isRequestError = isRequestErrorGuard<RequestError>('RequestError');
 
 /**
- * Throws a RequestError as a JavaScript Error
- *
- * @param error - RequestError object
- * @throws JavaScript Error (with RequestError in cause)
- *
- * @example
- * ```typescript
- * const requestError = createRequestError('Request failed', request);
- * throwRequestError(requestError);
- * ```
- */
-export const throwRequestError = (error: RequestError): never => {
-  const jsError = new Error(error.message, { cause: error });
-  if (error.stack) {
-    jsError.stack = error.stack;
-  }
-  throw jsError;
-};
-
-/**
  * Extracts a RequestError from a JavaScript Error
  *
  * @param error - JavaScript Error

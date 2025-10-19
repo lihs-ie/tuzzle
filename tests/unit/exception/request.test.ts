@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   createRequestError,
   isRequestError,
-  throwRequestError,
   extractRequestError,
 } from '../../../src/exception/request.js';
 import type { RequestError } from '../../../src/exception/request.js';
+import { throwError } from '../../../src/exception/common.js';
 import type { HttpRequest } from '../../../src/message/request.js';
 import { HttpRequest as createHttpRequest } from '../../../src/message/request.js';
 
@@ -65,21 +65,21 @@ describe('RequestError', () => {
     });
   });
 
-  describe('throwRequestError', () => {
+  describe('throwError', () => {
     it('should throw standard Error', () => {
       const requestError = createRequestError('Request failed', mockRequest);
-      expect(() => throwRequestError(requestError)).toThrow(Error);
+      expect(() => throwError(requestError)).toThrow(Error);
     });
 
     it('should preserve message in thrown Error', () => {
       const requestError = createRequestError('Request failed', mockRequest);
-      expect(() => throwRequestError(requestError)).toThrow('Request failed');
+      expect(() => throwError(requestError)).toThrow('Request failed');
     });
 
     it('should attach RequestError as cause', () => {
       const requestError = createRequestError('Request failed', mockRequest);
       try {
-        throwRequestError(requestError);
+        throwError(requestError);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         if (error instanceof Error) {
@@ -93,7 +93,7 @@ describe('RequestError', () => {
     it('should extract RequestError from Error', () => {
       const originalError = createRequestError('Request failed', mockRequest);
       try {
-        throwRequestError(originalError);
+        throwError(originalError);
       } catch (error) {
         if (error instanceof Error) {
           const extracted = extractRequestError(error);

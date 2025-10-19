@@ -69,26 +69,6 @@ export const isClientError = isRequestErrorGuard<ClientError>('ClientError', (ca
 });
 
 /**
- * Throws a ClientError as a JavaScript Error
- *
- * @param error - ClientError object
- * @throws JavaScript Error (with ClientError in cause)
- *
- * @example
- * ```typescript
- * const clientError = createClientError('Not found', request, response);
- * throwClientError(clientError);
- * ```
- */
-export const throwClientError = (error: ClientError): never => {
-  const jsError = new Error(error.message, { cause: error });
-  if (error.stack) {
-    jsError.stack = error.stack;
-  }
-  throw jsError;
-};
-
-/**
  * Extracts a ClientError from a JavaScript Error
  *
  * @param error - JavaScript Error
