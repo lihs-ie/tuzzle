@@ -4,29 +4,29 @@
  */
 
 // Core client
-export { HttpClient } from './client.js';
-export type { ClientConfig } from './client.js';
+export { HttpClient } from './client';
+export type { ClientConfig } from './client';
 
 // HTTP methods
-export { Method } from './method.js';
-export type { Method as HttpMethod } from './method.js';
+export { Method } from './method';
+export type { Method as HttpMethod } from './method';
 
 // Message types (PSR-7 equivalent)
-export { HttpRequest } from './message/request.js';
-export { HttpResponse } from './message/response.js';
-export { HttpHeaders } from './message/headers.js';
-export type { HttpHeaders as HttpHeadersType, HeaderValue } from './message/headers.js';
-export { normalizeHeaderKey, parseHeaderValue } from './message/headers.js';
-export { HttpBodyStream } from './message/stream.js';
+export { HttpRequest } from './message/request';
+export { HttpResponse } from './message/response';
+export { HttpHeaders } from './message/headers';
+export type { HttpHeaders as HttpHeadersType, HeaderValue } from './message/headers';
+export { normalizeHeaderKey, parseHeaderValue } from './message/headers';
+export { HttpBodyStream } from './message/stream';
 
 // Handler and middleware
-export { HandlerStack } from './handler/stack.js';
-export { FetchHandler } from './handler/fetch.js';
-export type { Handler, Middleware, TransferStats, RequestOptions } from './handler/stack.js';
+export { HandlerStack } from './handler/stack';
+export { FetchHandler } from './handler/fetch';
+export type { Handler, Middleware, TransferStats, RequestOptions } from './handler/stack';
 
 // Cookies
-export { CookieJar } from './cookie/jar.js';
-export { parseSetCookie } from './cookie/set.js';
+export { CookieJar } from './cookie/jar';
+export { parseSetCookie } from './cookie/set';
 
 // Exceptions (re-export from exception/index.ts)
 export type {
@@ -38,7 +38,7 @@ export type {
   ClientError,
   ServerError,
   TooManyRedirectsError,
-} from './exception/index.js';
+} from './exception';
 
 export {
   throwError,
@@ -69,4 +69,4 @@ export {
   formatErrorMessage,
   summarizeBody,
   summarizeBodyStream,
-} from './exception/index.js';
+} from './exception';
