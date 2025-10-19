@@ -5,9 +5,9 @@ import { HttpRequest } from '../../src/message/request';
 import { HttpResponse } from '../../src/message/response';
 import { Method } from '../../src/method';
 
-describe('RequestOptions型', () => {
+describe('RequestOptions type', () => {
   it('should accept all valid option types', () => {
-    // 全てのオプションが正しく型付けされることを確認
+    // Verify that all options are correctly typed
     const options: RequestOptions = {
       allowRedirects: true,
       auth: ['user', 'pass', 'basic'] as const,
@@ -46,7 +46,7 @@ describe('RequestOptions型', () => {
       allowRedirects: false,
     };
 
-    // 型が正しく推論されることを確認（コンパイルエラーがなければOK）
+    // Verify that the type is correctly inferred (OK if no compilation error)
     expectTypeOf(options).toMatchTypeOf<RequestOptions>();
   });
 
@@ -164,7 +164,7 @@ describe('RequestOptions型', () => {
   });
 });
 
-describe('MultipartItem型', () => {
+describe('MultipartItem type', () => {
   it('should accept multipart item structure', () => {
     const item: MultipartItem = {
       name: 'file',
@@ -181,7 +181,7 @@ describe('MultipartItem型', () => {
   });
 });
 
-describe('TransferStats型', () => {
+describe('TransferStats type', () => {
   it('should accept transfer stats structure', () => {
     const dummyRequest = HttpRequest(Method.GET, 'https://example.com');
 

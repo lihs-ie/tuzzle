@@ -14,7 +14,7 @@ import type { MockItem } from '../../mock/index.js';
 
 describe('Mock Handler Integration Tests', () => {
   it('should integrate with HttpClient using mock handler', async () => {
-    // モックハンドラーを作成
+    // Create mock handler
     const mockHandler = createMockHandler({
       queue: [
         mockJsonResponse(200, { users: ['Alice', 'Bob'] }),
@@ -22,16 +22,16 @@ describe('Mock Handler Integration Tests', () => {
       ],
     });
 
-    // ハンドラースタックに設定
+    // Set in handler stack
     const stack = HandlerStack(mockHandler);
 
-    // HttpClientを作成
+    // Create HttpClient
     const client = HttpClient({
       baseURL: 'https://api.example.com',
       handlerStack: stack,
     });
 
-    // リクエスト実行
+    // Execute requests
     const response1 = await client.get('/users');
     expect(response1.statusCode).toBe(200);
     expect(response1.body?.content).toContain('Alice');
@@ -60,10 +60,10 @@ describe('Mock Handler Integration Tests', () => {
       queue: [mockResponse(200, 'OK')],
     });
 
-    // ミドルウェアを追加
+    // Add middleware
     const stack = HandlerStack(mockHandler).push(
       (next) => async (request, options) => {
-        // リクエストにカスタムヘッダーを追加
+        // Add custom header to request
         const modifiedRequest = {
           ...request,
           headers: request.headers.set('X-Custom-Middleware', 'true'),
@@ -80,7 +80,7 @@ describe('Mock Handler Integration Tests', () => {
 
     await client.get('/test');
 
-    // モックハンドラーに渡されたリクエストを確認
+    // Verify request passed to mock handler
     const lastRequest = getLastRequest(mockHandler);
     expect(lastRequest?.headers.get('X-Custom-Middleware')).toBe('true');
   });
@@ -130,16 +130,16 @@ describe('Mock Handler Integration Tests', () => {
       handlerStack: stack,
     });
 
-    // 最初のレスポンス
+    // First response
     const response1 = await client.get('/test');
     expect(response1.body?.content).toBe('First');
     expect(countMockQueue(mockHandler)).toBe(0);
 
-    // 新しいレスポンスを追加
+    // Add new responses
     appendMockQueue(mockHandler, mockResponse(201, 'Second'), mockResponse(202, 'Third'));
     expect(countMockQueue(mockHandler)).toBe(2);
 
-    // 追加したレスポンスを取得
+    // Get added responses
     const response2 = await client.get('/test');
     expect(response2.body?.content).toBe('Second');
 
@@ -281,7 +281,7 @@ describe('Mock Handler Integration Tests', () => {
     await client.get('/test');
     expect(countMockQueue(mockHandler)).toBe(0);
 
-    // キューが空なのでエラーが発生
+    // Error occurs because queue is empty
     await expect(client.get('/test')).rejects.toThrow('Mock queue is empty');
   });
 });

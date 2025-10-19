@@ -4,17 +4,17 @@ import { FetchHandler } from '../../../src/handler/fetch';
 import { Method } from '../../../src/method';
 import { HttpHeaders } from '../../../src/message/headers';
 
-// グローバル fetch のモック
+// Mock global fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// モックリクエスト
+// Mock request
 const createMockRequest = () =>
   HttpRequest(Method.GET, 'https://example.com/test', {
     headers: HttpHeaders({ 'Content-Type': 'application/json' }),
   });
 
-// モック Response
+// Mock Response
 const createMockResponse = (
   status: number,
   statusText: string,

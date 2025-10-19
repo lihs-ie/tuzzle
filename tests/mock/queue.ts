@@ -1,6 +1,6 @@
 /**
- * モックレスポンスキュー管理ヘルパー
- * テスト用のレスポンスを簡単に生成するユーティリティ関数
+ * Mock response queue management helpers
+ * Utility functions to easily generate responses for testing
  */
 
 import type { HttpResponse } from '../../src/message/response.js';
@@ -9,11 +9,11 @@ import { HttpBodyStream } from '../../src/message/stream.js';
 import { HttpHeaders } from '../../src/message/headers.js';
 
 /**
- * 簡単なレスポンスを生成するヘルパー
+ * Helper to generate simple responses
  *
- * @param statusCode - ステータスコード
- * @param body - ボディ文字列（省略可）
- * @param headers - ヘッダー（省略可）
+ * @param statusCode - Status code
+ * @param body - Body string (optional)
+ * @param headers - Headers (optional)
  * @returns HttpResponse
  *
  * @example
@@ -34,11 +34,11 @@ export const mockResponse = (
 };
 
 /**
- * JSON レスポンスを生成するヘルパー
+ * Helper to generate JSON responses
  *
- * @param statusCode - ステータスコード
- * @param data - JSON データ
- * @param headers - ヘッダー（省略可）
+ * @param statusCode - Status code
+ * @param data - JSON data
+ * @param headers - Headers (optional)
  * @returns HttpResponse
  *
  * @example
@@ -62,10 +62,10 @@ export const mockJsonResponse = (
 };
 
 /**
- * エラーレスポンスを生成するヘルパー
+ * Helper to generate error responses
  *
- * @param statusCode - ステータスコード
- * @param message - エラーメッセージ
+ * @param statusCode - Status code
+ * @param message - Error message
  * @returns HttpResponse
  *
  * @example

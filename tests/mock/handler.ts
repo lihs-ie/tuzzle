@@ -1,6 +1,6 @@
 /**
- * モックハンドラー
- * テスト用のレスポンスやエラーをキューから返すハンドラー
+ * Mock handler
+ * Handler that returns test responses or errors from a queue
  */
 
 import type { Handler, RequestOptions, TransferStats } from '../../src/handler/stack.js';
@@ -9,8 +9,8 @@ import type { HttpResponse } from '../../src/message/response.js';
 import type { HttpBodyStream } from '../../src/message/stream.js';
 
 /**
- * モックアイテムの型
- * レスポンス・エラー・カスタム関数のいずれか
+ * Mock item type
+ * Can be a response, error, or custom function
  */
 export type MockItem =
   | HttpResponse
@@ -18,7 +18,7 @@ export type MockItem =
   | ((request: HttpRequest, options: RequestOptions) => HttpResponse | Promise<HttpResponse>);
 
 /**
- * モックハンドラーの状態
+ * Mock handler state
  */
 type MockHandler = {
   readonly queue: readonly MockItem[];
@@ -29,7 +29,7 @@ type MockHandler = {
 };
 
 /**
- * HttpBodyStream から文字列を読み取る
+ * Read string from HttpBodyStream
  */
 const streamToString = async (stream: HttpBodyStream): Promise<string> => {
   if (stream.content === null) {
@@ -44,7 +44,7 @@ const streamToString = async (stream: HttpBodyStream): Promise<string> => {
     return await stream.content.text();
   }
 
-  // ReadableStream の場合
+  // For ReadableStream
   const reader = stream.content.getReader();
   const decoder = new TextDecoder();
   let result = '';
@@ -60,7 +60,7 @@ const streamToString = async (stream: HttpBodyStream): Promise<string> => {
 };
 
 /**
- * sink オプションの処理
+ * Handle sink option
  */
 const handleSink = async (
   sink: string | NodeJS.WriteStream,
@@ -73,20 +73,20 @@ const handleSink = async (
   const content = await streamToString(response.body);
 
   if (typeof sink === 'string') {
-    // ファイルパスの場合
+    // If file path
     const fs = await import('fs');
     await fs.promises.writeFile(sink, content);
   } else {
-    // WriteStream の場合
+    // If WriteStream
     sink.write(content);
   }
 };
 
 /**
- * モックハンドラーを生成する
+ * Create mock handler
  *
- * @param options - オプション
- * @returns モックハンドラー関数
+ * @param options - Options
+ * @returns Mock handler function
  *
  * @example
  * ```typescript
@@ -115,14 +115,14 @@ export const createMockHandler = (options?: {
     request: HttpRequest,
     requestOptions: RequestOptions,
   ): Promise<HttpResponse> => {
-    // リクエスト情報を保存
+    // Save request information
     state = {
       ...state,
       lastRequest: request,
       lastOptions: requestOptions,
     };
 
-    // キューが空の場合はエラー
+    // Error if queue is empty
     if (state.queue.length === 0) {
       const error = new Error('Mock queue is empty');
       if (state.onRejected) {
@@ -131,12 +131,12 @@ export const createMockHandler = (options?: {
       throw error;
     }
 
-    // delay オプションの処理
+    // Handle delay option
     if (requestOptions.delay && typeof requestOptions.delay === 'number') {
       await new Promise((resolve) => setTimeout(resolve, requestOptions.delay));
     }
 
-    // キューから次のアイテムを取得
+    // Get next item from queue
     const item = state.queue[0];
     if (!item) {
       const error = new Error('Mock queue is empty');
@@ -148,21 +148,21 @@ export const createMockHandler = (options?: {
     const remainingQueue = state.queue.slice(1);
     state = { ...state, queue: remainingQueue };
 
-    // on_headers コールバックの実行
+    // Execute on_headers callback
     if (requestOptions.onHeaders && typeof requestOptions.onHeaders === 'function') {
       try {
         if (item instanceof Error) {
-          // エラーの場合はコールバックを実行しない
+          // Don't execute callback for errors
         } else if (typeof item === 'function') {
-          // 関数の場合は実行してからコールバック
+          // Execute function first, then callback
           const response = await item(request, requestOptions);
           requestOptions.onHeaders(response);
         } else {
-          // レスポンスの場合はそのままコールバック
+          // Callback with response as-is
           requestOptions.onHeaders(item);
         }
       } catch (error) {
-        // on_headers でエラーが発生した場合
+        // If error occurs in on_headers
         const errorMessage = error instanceof Error ? error.message : String(error);
         const wrappedError = new Error(
           `An error was encountered during the on_headers event: ${errorMessage}`,
@@ -174,18 +174,18 @@ export const createMockHandler = (options?: {
       }
     }
 
-    // アイテムの種類に応じて処理
+    // Process based on item type
     if (item instanceof Error) {
-      // エラーの場合
+      // If error
       if (state.onRejected) {
         state.onRejected(item);
       }
       throw item;
     } else if (typeof item === 'function') {
-      // 関数の場合は実行
+      // If function, execute it
       const response = await item(request, requestOptions);
 
-      // on_stats コールバックの実行
+      // Execute on_stats callback
       if (requestOptions.onStats && typeof requestOptions.onStats === 'function') {
         const stats: TransferStats = {
           request,
@@ -196,7 +196,7 @@ export const createMockHandler = (options?: {
         requestOptions.onStats(stats);
       }
 
-      // sink オプションの処理
+      // Handle sink option
       if (requestOptions.sink && response.body) {
         await handleSink(requestOptions.sink, response);
       }
@@ -207,10 +207,10 @@ export const createMockHandler = (options?: {
 
       return response;
     } else {
-      // レスポンスの場合
+      // If response
       const response = item;
 
-      // on_stats コールバックの実行
+      // Execute on_stats callback
       if (requestOptions.onStats && typeof requestOptions.onStats === 'function') {
         const stats: TransferStats = {
           request,
@@ -221,7 +221,7 @@ export const createMockHandler = (options?: {
         requestOptions.onStats(stats);
       }
 
-      // sink オプションの処理
+      // Handle sink option
       if (requestOptions.sink && response.body) {
         await handleSink(requestOptions.sink, response);
       }
@@ -234,7 +234,7 @@ export const createMockHandler = (options?: {
     }
   };
 
-  // ヘルパーメソッドを追加
+  // Add helper methods
   (handler as Handler & { getLastRequest: () => HttpRequest | null }).getLastRequest = () =>
     state.lastRequest;
   (handler as Handler & { getLastOptions: () => RequestOptions | null }).getLastOptions = () =>
@@ -253,10 +253,10 @@ export const createMockHandler = (options?: {
 };
 
 /**
- * 最後に処理されたリクエストを取得する
+ * Get the last processed request
  *
- * @param handler - ハンドラー
- * @returns 最後のリクエスト、または null
+ * @param handler - Handler
+ * @returns Last request, or null
  */
 export const getLastRequest = (handler: Handler): HttpRequest | null => {
   return (
@@ -265,10 +265,10 @@ export const getLastRequest = (handler: Handler): HttpRequest | null => {
 };
 
 /**
- * 最後に処理されたリクエストオプションを取得する
+ * Get the last processed request options
  *
- * @param handler - ハンドラー
- * @returns 最後のリクエストオプション、または null
+ * @param handler - Handler
+ * @returns Last request options, or null
  */
 export const getLastOptions = (handler: Handler): RequestOptions | null => {
   return (
@@ -278,29 +278,29 @@ export const getLastOptions = (handler: Handler): RequestOptions | null => {
 };
 
 /**
- * モックキューの残りアイテム数を取得する
+ * Get remaining item count in mock queue
  *
- * @param handler - ハンドラー
- * @returns キューの残り数
+ * @param handler - Handler
+ * @returns Remaining queue count
  */
 export const countMockQueue = (handler: Handler): number => {
   return (handler as Handler & { count?: () => number }).count?.() ?? 0;
 };
 
 /**
- * モックキューをリセットする
+ * Reset mock queue
  *
- * @param handler - ハンドラー
+ * @param handler - Handler
  */
 export const resetMockQueue = (handler: Handler): void => {
   (handler as Handler & { reset?: () => void }).reset?.();
 };
 
 /**
- * モックキューにアイテムを追加する
+ * Append items to mock queue
  *
- * @param handler - ハンドラー
- * @param items - 追加するアイテム
+ * @param handler - Handler
+ * @param items - Items to append
  */
 export const appendMockQueue = (handler: Handler, ...items: MockItem[]): void => {
   (handler as Handler & { append?: (...items: MockItem[]) => void }).append?.(...items);

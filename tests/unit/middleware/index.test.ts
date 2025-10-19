@@ -6,7 +6,7 @@ import { mapRequest, mapResponse, tap } from '../../../src/middleware/index';
 import { Method } from '../../../src/method';
 import { HttpHeaders } from '../../../src/message/headers';
 
-// モックハンドラー
+// Mock handler
 const createMockHandler = (): Handler => {
   return () =>
     Promise.resolve(
@@ -17,7 +17,7 @@ const createMockHandler = (): Handler => {
     );
 };
 
-// モックリクエスト
+// Mock request
 const createMockRequest = () => HttpRequest(Method.GET, 'https://example.com');
 
 describe('mapRequest', () => {

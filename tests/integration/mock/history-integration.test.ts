@@ -148,7 +148,7 @@ describe('History Middleware Integration Tests', () => {
       queue: [mockResponse(200, 'OK')],
     });
 
-    // カスタムミドルウェアを追加
+    // Add custom middleware
     const customMiddleware = HandlerStack(mockHandler).push(
       (next) => async (request, options) => {
         const modifiedRequest = {
@@ -160,7 +160,7 @@ describe('History Middleware Integration Tests', () => {
       'custom',
     );
 
-    // ヒストリーミドルウェアを追加
+    // Add history middleware
     const stack = customMiddleware.push(createHistoryMiddleware(history), 'history');
 
     const client = HttpClient({
@@ -191,12 +191,12 @@ describe('History Middleware Integration Tests', () => {
       handlerStack: stack,
     });
 
-    // 並行リクエスト
+    // Concurrent requests
     await Promise.all([client.get('/test1'), client.get('/test2'), client.get('/test3')]);
 
     expect(history.current).toHaveLength(3);
 
-    // すべてのリクエストが記録されていることを確認
+    // Verify all requests are recorded
     const uris = history.current.map((entry) => entry.request.uri);
     expect(uris.some((uri) => uri.includes('/test1'))).toBe(true);
     expect(uris.some((uri) => uri.includes('/test2'))).toBe(true);
@@ -219,21 +219,21 @@ describe('History Middleware Integration Tests', () => {
       handlerStack: stack,
     });
 
-    // 1. ユーザー一覧取得
+    // 1. Get user list
     const usersResponse = await client.get('/users');
     expect(usersResponse.statusCode).toBe(200);
 
-    // 2. ユーザー作成
+    // 2. Create user
     const createResponse = await client.post('/users', {
       json: { name: 'Alice' },
     });
     expect(createResponse.statusCode).toBe(201);
 
-    // 3. ユーザー詳細取得
+    // 3. Get user details
     const userResponse = await client.get('/users/1');
     expect(userResponse.statusCode).toBe(200);
 
-    // 履歴を検証
+    // Verify history
     expect(history.current).toHaveLength(3);
 
     const getRequest = history.current[0];
@@ -258,7 +258,7 @@ describe('History Middleware Integration Tests', () => {
       queue: [mockResponse(200, 'Client 2')],
     });
 
-    // 同じhistoryコンテナを共有
+    // Share the same history container
     const stack1 = HandlerStack(mockHandler1).push(createHistoryMiddleware(history), 'history');
     const stack2 = HandlerStack(mockHandler2).push(createHistoryMiddleware(history), 'history');
 
@@ -275,7 +275,7 @@ describe('History Middleware Integration Tests', () => {
     await client1.get('/test1');
     await client2.get('/test2');
 
-    // 両方のリクエストが同じhistoryに記録される
+    // Both requests are recorded in the same history
     expect(history.current).toHaveLength(2);
 
     expect(history.current[0]?.request.uri).toContain('api1.example.com');

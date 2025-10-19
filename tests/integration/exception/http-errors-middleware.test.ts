@@ -8,7 +8,7 @@ import type { Handler, RequestOptions } from '../../../src/handler/stack.js';
 import type { HttpResponse as HttpResponseType } from '../../../src/message/response.js';
 
 describe('httpErrors middleware integration', () => {
-  // モックハンドラー: 指定されたステータスコードのレスポンスを返す
+  // Mock handler: returns a response with the specified status code
   const createMockHandler = (statusCode: number): Handler => {
     return async () => Promise.resolve(HttpResponse(statusCode, {}));
   };

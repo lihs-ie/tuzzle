@@ -1,6 +1,6 @@
 /**
- * リクエスト・レスポンス履歴記録ミドルウェア
- * テストでリクエストとレスポンスの履歴を検証するための機能
+ * Request/Response history recording middleware
+ * Provides functionality for verifying request and response history in tests
  */
 
 import type { Middleware, Handler, RequestOptions } from '../../src/handler/stack.js';
@@ -8,7 +8,7 @@ import type { HttpRequest } from '../../src/message/request.js';
 import type { HttpResponse } from '../../src/message/response.js';
 
 /**
- * 履歴エントリー
+ * History entry
  */
 export type HistoryEntry = {
   readonly request: HttpRequest;
@@ -18,25 +18,25 @@ export type HistoryEntry = {
 };
 
 /**
- * 履歴コンテナ
+ * History container
  */
 export type HistoryContainer = readonly HistoryEntry[];
 
 /**
- * リクエスト・レスポンスの履歴を記録するミドルウェア
+ * Middleware for recording request/response history
  *
- * @param container - 履歴を格納する配列（ミュータブルな参照）
- * @returns ミドルウェア
+ * @param container - Mutable reference to store history
+ * @returns Middleware
  *
  * @example
  * ```typescript
  * const history = { current: [] };
  * const middleware = createHistoryMiddleware(history);
  *
- * // ミドルウェアをスタックに追加
+ * // Add middleware to stack
  * const stack = push(HandlerStack(), middleware, 'history');
  *
- * // リクエスト送信後、history.current に記録される
+ * // After sending request, it will be recorded in history.current
  * await client.get('/api/users');
  * console.log(history.current[0].request.uri); // '/api/users'
  * ```
@@ -47,7 +47,7 @@ export const createHistoryMiddleware = (container: { current: HistoryEntry[] }):
       try {
         const response = await next(request, options);
 
-        // 成功時の履歴を記録
+        // Record successful history
         container.current.push({
           request,
           response,
@@ -57,7 +57,7 @@ export const createHistoryMiddleware = (container: { current: HistoryEntry[] }):
 
         return response;
       } catch (error) {
-        // エラー時の履歴を記録
+        // Record error history
         container.current.push({
           request,
           response: null,
@@ -65,7 +65,7 @@ export const createHistoryMiddleware = (container: { current: HistoryEntry[] }):
           options,
         });
 
-        // エラーを再スロー
+        // Re-throw error
         throw error;
       }
     };
@@ -73,9 +73,9 @@ export const createHistoryMiddleware = (container: { current: HistoryEntry[] }):
 };
 
 /**
- * 履歴をクリアする
+ * Clear history
  *
- * @param container - 履歴コンテナ
+ * @param container - History container
  *
  * @example
  * ```typescript
@@ -90,10 +90,10 @@ export const clearHistory = (container: { current: HistoryEntry[] }): void => {
 };
 
 /**
- * 最後の履歴エントリーを取得する
+ * Get the last history entry
  *
- * @param container - 履歴コンテナ
- * @returns 最後の履歴エントリー、または null
+ * @param container - History container
+ * @returns Last history entry, or null
  *
  * @example
  * ```typescript

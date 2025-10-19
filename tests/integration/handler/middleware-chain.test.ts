@@ -6,11 +6,11 @@ import { mapRequest, mapResponse } from '../../../src/middleware/index';
 import { FetchHandler } from '../../../src/handler/fetch';
 import { Method } from '../../../src/method';
 
-// グローバル fetch のモック
+// Mock global fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// モック Response
+// Mock Response
 const createMockResponse = (
   status: number,
   statusText: string,
@@ -36,10 +36,10 @@ beforeEach(() => {
 
 describe('Middleware Chain Integration', () => {
   it('should execute middleware chain in correct order', async () => {
-    // ミドルウェアチェーンの実行順序を記録
+    // Record middleware chain execution order
     const executionOrder: string[] = [];
 
-    // リクエストを変換するミドルウェア
+    // Middleware to transform request
     const addAuthHeader = mapRequest((request: HttpRequest) => {
       executionOrder.push('add-auth');
       return {
@@ -48,7 +48,7 @@ describe('Middleware Chain Integration', () => {
       };
     });
 
-    // レスポンスを変換するミドルウェア
+    // Middleware to transform response
     const addResponseHeader = mapResponse((response: HttpResponse) => {
       executionOrder.push('add-response-header');
       return {
@@ -57,29 +57,29 @@ describe('Middleware Chain Integration', () => {
       };
     });
 
-    // ハンドラースタックの構築
+    // Build handler stack
     let stack = HandlerStack();
     stack = stack.setHandler(FetchHandler());
     stack = stack.push(addAuthHeader, 'auth');
     stack = stack.push(addResponseHeader, 'response-header');
 
-    // スタックの解決
+    // Resolve stack
     const handler = stack.resolve();
 
-    // モックの設定
+    // Configure mock
     mockFetch.mockResolvedValue(
       createMockResponse(200, 'OK', { 'Content-Type': 'application/json' }, '{"success":true}'),
     );
 
-    // リクエストの実行
+    // Execute request
     const request = HttpRequest(Method.GET, 'https://api.example.com/data');
 
     const response = await handler(request, {});
 
-    // 実行順序の検証
+    // Verify execution order
     expect(executionOrder).toEqual(['add-auth', 'add-response-header']);
 
-    // リクエストヘッダーが追加されていることを確認
+    // Verify request header was added
     expect(mockFetch).toHaveBeenCalledWith(
       'https://api.example.com/data',
       expect.objectContaining({
@@ -89,7 +89,7 @@ describe('Middleware Chain Integration', () => {
       }) as RequestInit,
     );
 
-    // レスポンスヘッダーが追加されていることを確認
+    // Verify response header was added
     expect(response.headers.get('X-Processed')).toBe('true');
     expect(response.statusCode).toBe(200);
   });
@@ -130,7 +130,7 @@ describe('Middleware Chain Integration', () => {
 
     await handler(request, {});
 
-    // 全てのヘッダーが追加されていることを確認
+    // Verify all headers were added
     expect(mockFetch).toHaveBeenCalledWith(
       'https://example.com',
       expect.objectContaining({
@@ -173,9 +173,9 @@ describe('Middleware Chain Integration', () => {
 
     const response = await handler(request, {});
 
-    // オリジナルのヘッダーが保持されている
+    // Original header is preserved
     expect(response.headers.get('X-Original')).toBe('header');
-    // 両方のミドルウェアが適用されている
+    // Both middleware are applied
     expect(response.headers.get('X-Middleware-1')).toBe('applied');
     expect(response.headers.get('X-Middleware-2')).toBe('applied');
   });
@@ -196,8 +196,8 @@ describe('Middleware Chain Integration', () => {
     const options = { timeout: 5000, customOption: 'test' };
     await handler(request, options);
 
-    // オプションが正しく渡されていることを確認
-    // (FetchHandlerがtimeoutオプションを使用している)
+    // Verify options are passed correctly
+    // (FetchHandler uses timeout option)
     expect(mockFetch).toHaveBeenCalledWith(
       'https://example.com',
       expect.objectContaining({

@@ -5,7 +5,7 @@ import { HandlerStack, type Handler, type Middleware } from '../../../src/handle
 import { Method } from '../../../src/method';
 import { HttpHeaders } from '../../../src/message/headers';
 
-// モックハンドラー
+// Mock handler
 const createMockHandler = (name: string): Handler => {
   return () =>
     Promise.resolve(
@@ -16,7 +16,7 @@ const createMockHandler = (name: string): Handler => {
     );
 };
 
-// モックミドルウェア
+// Mock middleware
 const createMockMiddleware = (name: string): Middleware => {
   return (next: Handler) => {
     return async (request: HttpRequest, options: Record<string, unknown>) => {
@@ -221,9 +221,9 @@ describe('resolve', () => {
 
     const response = await resolved(request, {});
 
-    // リクエストは A → B の順で処理
-    expect(request.headers.get('X-Middleware-A')).toBeUndefined(); // 元のrequestは変更されない
-    // レスポンスは B → A の逆順で処理
+    // Request is processed in A → B order
+    expect(request.headers.get('X-Middleware-A')).toBeUndefined(); // Original request is not modified
+    // Response is processed in reverse order B → A
     expect(response.headers.get('X-Response-A')).toBe('processed');
     expect(response.headers.get('X-Response-B')).toBe('processed');
   });

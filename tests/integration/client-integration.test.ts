@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { HttpClient } from '../../src/client';
 
-// グローバル fetch のモック
+// Mock global fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// モック Response
+// Mock Response
 const createMockResponse = (
   status: number,
   statusText: string,
@@ -47,7 +47,7 @@ describe('Client Integration Tests', () => {
 
     expect(response.statusCode).toBe(200);
 
-    // デフォルトヘッダーが送信されていることを確認
+    // Verify that default headers are sent
     const callArgs = mockFetch.mock.calls[0];
     const requestInit = callArgs?.[1] as RequestInit | undefined;
 
@@ -75,7 +75,7 @@ describe('Client Integration Tests', () => {
 
     await client.get('/test');
 
-    // タイムアウトシグナルが設定されていることを確認
+    // Verify that timeout signal is set
     const callArgs = mockFetch.mock.calls[0];
     const requestInit = callArgs?.[1] as RequestInit | undefined;
 
@@ -95,7 +95,7 @@ describe('Client Integration Tests', () => {
       .mockResolvedValueOnce(createMockResponse(201, 'Created', {}, '{"id":1}'))
       .mockResolvedValueOnce(createMockResponse(200, 'OK', {}, '{"id":1,"name":"John"}'));
 
-    // 複数のリクエストを順次実行
+    // Execute multiple requests sequentially
     const response1 = await client.get('/users');
     const response2 = await client.post('/users', { json: { name: 'John' } });
     const response3 = await client.get('/users/1');
@@ -104,10 +104,10 @@ describe('Client Integration Tests', () => {
     expect(response2.statusCode).toBe(201);
     expect(response3.statusCode).toBe(200);
 
-    // 全てのリクエストが実行されたことを確認
+    // Verify that all requests were executed
     expect(mockFetch).toHaveBeenCalledTimes(3);
 
-    // 全てのリクエストにAuthorizationヘッダーが含まれていることを確認
+    // Verify that all requests include the Authorization header
     const calls = mockFetch.mock.calls;
 
     for (const call of calls) {
@@ -141,7 +141,7 @@ describe('Client Integration Tests', () => {
     const callArgs = mockFetch.mock.calls[0];
     const requestInit = callArgs?.[1] as RequestInit | undefined;
 
-    // リクエストヘッダーがクライアントヘッダーをオーバーライド
+    // Request headers override client headers
     expect(requestInit?.headers).toEqual(
       expect.objectContaining({
         'Content-Type': 'application/json',
@@ -198,25 +198,25 @@ describe('Client Integration Tests', () => {
 
     mockFetch.mockResolvedValue(createMockResponse(200, 'OK', {}, ''));
 
-    // 最初のリクエスト
+    // First request
     await client.get('/test1', {
       headers: { 'X-Request-1': 'value1' },
       timeout: 5000,
     });
 
-    // 2番目のリクエスト
+    // Second request
     await client.get('/test2', {
       headers: { 'X-Request-2': 'value2' },
     });
 
-    // クライアント設定が変更されていないことを確認
+    // Verify that client configuration is unchanged
     const config = client.getConfig();
 
     expect(config.baseURL).toBe('https://api.example.com');
     expect(config.headers).toEqual({ 'User-Agent': 'tuzzle/1.0' });
     expect(config.timeout).toBe(3000);
 
-    // 各リクエストが独立していることを確認
+    // Verify that each request is independent
     const call1Headers = (mockFetch.mock.calls[0]?.[1] as RequestInit)?.headers;
     const call2Headers = (mockFetch.mock.calls[1]?.[1] as RequestInit)?.headers;
 
@@ -234,7 +234,7 @@ describe('Client Integration Tests', () => {
       }),
     );
 
-    // 最初のリクエストのヘッダーに X-Request-2 が含まれていないこと
+    // Verify that the first request's headers do not include X-Request-2
     expect(call1Headers).not.toEqual(expect.objectContaining({ 'X-Request-2': 'value2' }));
   });
 });

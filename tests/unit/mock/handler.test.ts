@@ -192,12 +192,12 @@ describe('createMockHandler', () => {
 
     await handler(request, options);
 
-    // ファイルが作成されたことを確認
+    // Verify that the file was created
     const fs = await import('fs');
     const content = await fs.promises.readFile(tempFile, 'utf-8');
     expect(content).toBe('Test content');
 
-    // クリーンアップ
+    // Cleanup
     await fs.promises.unlink(tempFile);
   });
 

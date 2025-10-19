@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { HttpClient } from '../../src/client';
 
-// グローバル fetch のモック
+// Mock global fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// モック Response
+// Mock Response
 const createMockResponse = (
   status: number,
   statusText: string,
@@ -259,7 +259,7 @@ describe('HttpClient', () => {
         },
       });
 
-      // リクエストオプションのheadersがマージされる
+      // Verify that request option headers are merged
       const callArgs = mockFetch.mock.calls[0];
       const requestInit = callArgs?.[1] as RequestInit | undefined;
 
@@ -292,7 +292,7 @@ describe('HttpClient', () => {
       const callArgs = mockFetch.mock.calls[0];
       const requestInit = callArgs?.[1] as RequestInit | undefined;
 
-      // リクエストオプションが優先される
+      // Request options take priority
       expect(requestInit?.headers).toEqual(
         expect.objectContaining({
           Accept: 'text/plain',
@@ -317,7 +317,7 @@ describe('HttpClient', () => {
 
       const config = client.getConfig();
 
-      // 元の設定が変更されていないこと
+      // Verify that original config has not been modified
       expect(config.headers).toEqual({ 'User-Agent': 'tuzzle/1.0' });
       expect(originalHeaders).toEqual({ 'User-Agent': 'tuzzle/1.0' });
     });

@@ -99,3 +99,30 @@ export const isRequestError = <E extends BaseRequestError>(
     return true;
   });
 };
+
+/**
+ * Throws a BaseError as a JavaScript Error
+ *
+ * @param error
+ *
+ * @throws JavaScript Error (with BaseError in cause)
+ *
+ * @example
+ * ```typescript
+ * type SomeError = BaseError<'SomeError'>;
+ * const error: SomeError = {
+ *   type: 'SomeError',
+ *   message: 'An error occurred',
+ * };
+ * throwError(error);
+ * ```
+ */
+export const throwError = <E extends BaseError>(error: E): never => {
+  const jsError = new Error(error.message, { cause: error });
+
+  if (error.stack) {
+    jsError.stack = error.stack;
+  }
+
+  throw jsError;
+};
