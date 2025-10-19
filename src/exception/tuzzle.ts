@@ -1,25 +1,22 @@
 /**
- * TuzzleError - tuzzle の基底エラー型
- * すべての tuzzle エラーの基底となる型です
+ * TuzzleError - Base error type for tuzzle
+ * Foundation type for all tuzzle errors
  */
 
-/**
- * TuzzleError 型定義
- * オブジェクトベースのエラー表現（クラスではない）
- */
-export type TuzzleError = {
-  readonly type: 'TuzzleError';
-  readonly message: string;
-  readonly cause?: Error;
-  readonly stack?: string;
-};
+import { isError, type BaseError } from './common.js';
 
 /**
- * TuzzleError を作成する
+ * TuzzleError type definition
+ * Object-based error representation (not a class)
+ */
+export type TuzzleError = BaseError<'TuzzleError'>;
+
+/**
+ * Create a TuzzleError
  *
- * @param message - エラーメッセージ
- * @param options - オプション（cause, stack）
- * @returns TuzzleError オブジェクト
+ * @param message - Error message
+ * @param options - Options (cause, stack)
+ * @returns TuzzleError object
  *
  * @example
  * ```typescript
@@ -31,7 +28,7 @@ export const createTuzzleError = (
   message: string,
   options?: { cause?: Error; stack?: string },
 ): TuzzleError => {
-  // スタックトレースの生成
+  // Generate stack trace
   const stack = options?.stack ?? new Error().stack;
 
   return {
@@ -43,10 +40,10 @@ export const createTuzzleError = (
 };
 
 /**
- * 値が TuzzleError かどうかを判定する型ガード
+ * Type guard to check if a value is TuzzleError
  *
- * @param value - 判定対象の値
- * @returns TuzzleError の場合は true
+ * @param value - Value to check
+ * @returns true if the value is TuzzleError
  *
  * @example
  * ```typescript
@@ -55,21 +52,14 @@ export const createTuzzleError = (
  * }
  * ```
  */
-export const isTuzzleError = (value: unknown): value is TuzzleError => {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const obj = value as Record<string, unknown>;
-  return obj.type === 'TuzzleError' && typeof obj.message === 'string';
-};
+export const isTuzzleError = isError<TuzzleError>('TuzzleError');
 
 /**
- * TuzzleError を JavaScript の Error として throw する
- * throw/catch 構文で使用するための変換関数
+ * Throw TuzzleError as a JavaScript Error
+ * Conversion function for use with throw/catch syntax
  *
- * @param error - TuzzleError オブジェクト
- * @throws JavaScript Error（cause に TuzzleError を含む）
+ * @param error - TuzzleError object
+ * @throws JavaScript Error (with TuzzleError in cause)
  *
  * @example
  * ```typescript
@@ -86,11 +76,11 @@ export const throwTuzzleError = (error: TuzzleError): never => {
 };
 
 /**
- * JavaScript Error から TuzzleError を抽出する
- * throw された Error の cause から元の TuzzleError を取得
+ * Extract TuzzleError from JavaScript Error
+ * Retrieve original TuzzleError from the cause of a thrown Error
  *
  * @param error - JavaScript Error
- * @returns 抽出された TuzzleError、見つからない場合は null
+ * @returns Extracted TuzzleError, or null if not found
  *
  * @example
  * ```typescript

@@ -1,5 +1,5 @@
 /**
- * fetch API ベースのデフォルトハンドラー
+ * Default handler based on fetch API
  */
 
 import type { HttpRequest } from '../message/request';
@@ -10,10 +10,10 @@ import { HttpHeaders } from '../message/headers';
 import type { Handler, RequestOptions } from './stack';
 
 /**
- * fetch Response を HttpResponse に変換する
+ * Converts a fetch Response to HttpResponse
  *
- * @param response - fetch API の Response オブジェクト
- * @returns HttpResponse オブジェクト
+ * @param response - Response object from fetch API
+ * @returns HttpResponse object
  */
 const convertFetchResponse = async (response: Response): Promise<HttpResponse> => {
   const headersRecord: Record<string, string> = {};
@@ -32,9 +32,9 @@ const convertFetchResponse = async (response: Response): Promise<HttpResponse> =
 };
 
 /**
- * fetch API を使用したデフォルトハンドラー
+ * Default handler using fetch API
  *
- * @returns Handler 関数
+ * @returns Handler function
  *
  * @example
  * ```typescript
@@ -50,7 +50,7 @@ export const FetchHandler = (): Handler => {
       body: request.body?.content !== undefined ? (request.body.content as BodyInit) : null,
     };
 
-    // タイムアウトオプションの処理
+    // Timeout option processing
     if (options.timeout && typeof options.timeout === 'number') {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), options.timeout);
@@ -66,7 +66,7 @@ export const FetchHandler = (): Handler => {
       }
     }
 
-    // タイムアウトなしの通常処理
+    // Normal processing without timeout
     const response = await fetch(request.uri, fetchOptions);
     return convertFetchResponse(response);
   };

@@ -1,32 +1,28 @@
 /**
- * ClientError - クライアントエラー型
- * 4xx HTTPステータスコードのエラーレスポンスを表現します
+ * ClientError - Client error type
+ * Represents error responses with 4xx HTTP status codes
  */
 
 import type { HttpRequest } from '../message/request.js';
 import type { HttpResponse } from '../message/response.js';
+import { isRequestError as isRequestErrorGuard, type BaseRequestError } from './common.js';
 
 /**
- * ClientError 型定義
- * BadResponseError の構造を継承しつつ、4xx エラーを表現します
+ * ClientError type definition
+ * Inherits the structure of BadResponseError and represents 4xx errors
  */
-export type ClientError = {
-  readonly type: 'ClientError';
-  readonly message: string;
-  readonly request: HttpRequest;
+export type ClientError = BaseRequestError<'ClientError'> & {
   readonly response: HttpResponse;
-  readonly cause?: Error;
-  readonly stack?: string;
 };
 
 /**
- * ClientError を作成する
+ * Creates a ClientError
  *
- * @param message - エラーメッセージ
- * @param request - HTTPリクエスト
- * @param response - HTTPレスポンス（4xx ステータスコード）
- * @param options - オプション（cause, stack）
- * @returns ClientError オブジェクト
+ * @param message - Error message
+ * @param request - HTTP request
+ * @param response - HTTP response (with 4xx status code)
+ * @param options - Options (cause, stack)
+ * @returns ClientError object
  *
  * @example
  * ```typescript
@@ -52,10 +48,10 @@ export const createClientError = (
 };
 
 /**
- * 値が ClientError かどうかを判定する型ガード
+ * Type guard to check if a value is a ClientError
  *
- * @param value - 判定対象の値
- * @returns ClientError の場合は true
+ * @param value - Value to check
+ * @returns true if the value is a ClientError
  *
  * @example
  * ```typescript
@@ -64,27 +60,19 @@ export const createClientError = (
  * }
  * ```
  */
-export const isClientError = (value: unknown): value is ClientError => {
-  if (typeof value !== 'object' || value === null) {
+export const isClientError = isRequestErrorGuard<ClientError>('ClientError', (candidate) => {
+  if (typeof candidate.response !== 'object' || candidate.response === null) {
     return false;
   }
 
-  const obj = value as Record<string, unknown>;
-  return (
-    obj.type === 'ClientError' &&
-    typeof obj.message === 'string' &&
-    typeof obj.request === 'object' &&
-    obj.request !== null &&
-    typeof obj.response === 'object' &&
-    obj.response !== null
-  );
-};
+  return true;
+});
 
 /**
- * ClientError を JavaScript の Error として throw する
+ * Throws a ClientError as a JavaScript Error
  *
- * @param error - ClientError オブジェクト
- * @throws JavaScript Error（cause に ClientError を含む）
+ * @param error - ClientError object
+ * @throws JavaScript Error (with ClientError in cause)
  *
  * @example
  * ```typescript
@@ -101,10 +89,10 @@ export const throwClientError = (error: ClientError): never => {
 };
 
 /**
- * JavaScript Error から ClientError を抽出する
+ * Extracts a ClientError from a JavaScript Error
  *
  * @param error - JavaScript Error
- * @returns 抽出された ClientError、見つからない場合は null
+ * @returns Extracted ClientError, or null if not found
  *
  * @example
  * ```typescript

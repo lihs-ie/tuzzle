@@ -1,6 +1,6 @@
 /**
- * エラーメッセージフォーマッター
- * HTTPエラーの詳細な情報を含むメッセージを生成します
+ * Error message formatter
+ * Generates messages containing detailed information about HTTP errors
  */
 
 import type { HttpRequest } from '../message/request.js';
@@ -10,12 +10,12 @@ import type { HttpBodyStream } from '../message/stream.js';
 const DEFAULT_MAX_BODY_LENGTH = 120;
 
 /**
- * HTTPエラーメッセージをフォーマットする
+ * Formats an HTTP error message
  *
- * @param baseMessage - 基本エラーメッセージ
- * @param request - HTTPリクエスト
- * @param response - HTTPレスポンス（null の場合もある）
- * @returns フォーマットされたエラーメッセージ
+ * @param baseMessage - Base error message
+ * @param request - HTTP request
+ * @param response - HTTP response (may be null)
+ * @returns Formatted error message
  *
  * @example
  * ```typescript
@@ -30,14 +30,14 @@ export const formatErrorMessage = (
 ): string => {
   const parts: string[] = [baseMessage];
 
-  // リクエスト情報を追加
+  // Add request information
   parts.push(`${request.method} ${request.uri}`);
 
-  // レスポンス情報を追加（存在する場合）
+  // Add response information (if exists)
   if (response) {
     parts.push(`${response.statusCode} ${response.reasonPhrase}`);
 
-    // ボディのサマリーを追加
+    // Add body summary
     const bodySummary = summarizeBodyStream(response.body);
     if (bodySummary) {
       parts.push(`Body: ${bodySummary}`);
@@ -48,11 +48,11 @@ export const formatErrorMessage = (
 };
 
 /**
- * HttpBodyStream から文字列を抽出して要約する
+ * Extracts and summarizes a string from HttpBodyStream
  *
- * @param bodyStream - HttpBodyStream（null の場合もある）
- * @param maxLength - 最大長（デフォルト: 120）
- * @returns 要約されたボディ文字列
+ * @param bodyStream - HttpBodyStream (may be null)
+ * @param maxLength - Maximum length (default: 120)
+ * @returns Summarized body string
  *
  * @example
  * ```typescript
@@ -67,7 +67,7 @@ export const summarizeBodyStream = (
     return '';
   }
 
-  // 文字列の場合のみ要約（Blob や ReadableStream は扱わない）
+  // Only summarize strings (don't handle Blob or ReadableStream)
   if (typeof bodyStream.content === 'string') {
     return summarizeBody(bodyStream.content, maxLength);
   }
@@ -76,12 +76,12 @@ export const summarizeBodyStream = (
 };
 
 /**
- * レスポンスボディを要約する
- * 長いボディは切り詰め、HTMLタグは除去されます
+ * Summarizes a response body
+ * Long bodies are truncated and HTML tags are removed
  *
- * @param body - レスポンスボディ
- * @param maxLength - 最大長（デフォルト: 120）
- * @returns 要約されたボディ文字列
+ * @param body - Response body
+ * @param maxLength - Maximum length (default: 120)
+ * @returns Summarized body string
  *
  * @example
  * ```typescript
@@ -89,7 +89,7 @@ export const summarizeBodyStream = (
  * // "Error"
  *
  * const longSummary = summarizeBody('a'.repeat(200), 50);
- * // "aaa...aaa" (50文字 + "...")
+ * // "aaa...aaa" (50 characters + "...")
  * ```
  */
 export const summarizeBody = (
@@ -100,7 +100,7 @@ export const summarizeBody = (
     return '';
   }
 
-  // 空白のみの文字列は空文字列として扱う
+  // Treat strings with only whitespace as empty strings
   const trimmed = body.trim();
   if (!trimmed) {
     return '';
@@ -108,16 +108,16 @@ export const summarizeBody = (
 
   let processed = trimmed;
 
-  // HTMLタグを除去
+  // Remove HTML tags
   processed = processed.replace(/<[^>]*>/g, '');
 
-  // 連続する空白を単一のスペースに変換
+  // Convert consecutive whitespace to single space
   processed = processed.replace(/\s+/g, ' ');
 
-  // 再度トリム
+  // Trim again
   processed = processed.trim();
 
-  // 最大長で切り詰め
+  // Truncate to maximum length
   if (processed.length > maxLength) {
     return processed.slice(0, maxLength) + '...';
   }

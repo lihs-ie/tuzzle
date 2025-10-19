@@ -1,6 +1,6 @@
 /**
- * Cookie管理モジュール
- * RFC 6265準拠のSetCookieパーサーとCookieJar
+ * Cookie management module
+ * RFC 6265 compliant SetCookie parser and CookieJar
  */
 
 export type { SetCookie } from './set.js';

@@ -1,5 +1,5 @@
 /**
- * HTTP ヘッダーの型定義と操作関数
+ * HTTP headers type definitions and operation functions
  */
 
 const HEADER_KEY_SEPARATOR = '-';
@@ -8,8 +8,8 @@ const HEADER_VALUE_DELIMITER = ',';
 export type HeaderValue = string | readonly string[];
 
 /**
- * HTTP ヘッダーの型
- * キーは文字列、値は文字列または文字列の配列
+ * HTTP headers type
+ * Keys are strings, values are strings or arrays of strings
  */
 export interface HttpHeaders {
   readonly data: Readonly<Record<string, HeaderValue>>;
@@ -46,11 +46,11 @@ const cloneHeaders = (
 };
 
 /**
- * ヘッダーキーを正規化する
- * 例: "content-type" → "Content-Type"
+ * Normalizes a header key
+ * Example: "content-type" → "Content-Type"
  *
- * @param key - 正規化するヘッダーキー
- * @returns Title-Case形式に正規化されたヘッダーキー
+ * @param key - Header key to normalize
+ * @returns Header key normalized to Title-Case format
  */
 export const normalizeHeaderKey = (key: string): string =>
   key
@@ -61,10 +61,10 @@ export const normalizeHeaderKey = (key: string): string =>
     .join(HEADER_KEY_SEPARATOR);
 
 /**
- * カンマ区切りのヘッダー値を配列に変換する
+ * Converts a comma-separated header value to an array
  *
- * @param value - 解析対象のヘッダー値
- * @returns 個々の値を格納した配列
+ * @param value - Header value to parse
+ * @returns Array containing individual values
  */
 export const parseHeaderValue = (value: string): readonly string[] => {
   if (value.trim().length === 0) {
@@ -78,10 +78,10 @@ export const parseHeaderValue = (value: string): readonly string[] => {
 };
 
 /**
- * 新しいHttpHeadersオブジェクトを生成する
+ * Creates a new HttpHeaders object
  *
- * @param data - 初期ヘッダーデータ（省略可）
- * @returns 新しいHttpHeadersオブジェクト
+ * @param data - Initial header data (optional)
+ * @returns A new HttpHeaders object
  *
  * @example
  * ```typescript

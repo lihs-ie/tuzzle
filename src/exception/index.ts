@@ -1,9 +1,9 @@
 /**
- * Exception モジュール
- * tuzzle の例外階層とエラーハンドリング機能を提供します
+ * Exception module
+ * Provides tuzzle's exception hierarchy and error handling functionality
  */
 
-// TuzzleError（基底エラー型）
+// TuzzleError (base error type)
 export type { TuzzleError } from './tuzzle.js';
 export {
   createTuzzleError,
@@ -12,7 +12,7 @@ export {
   extractTuzzleError,
 } from './tuzzle.js';
 
-// TransferError（転送エラー）
+// TransferError (transfer error)
 export type { TransferError } from './transfer.js';
 export {
   createTransferError,
@@ -21,7 +21,7 @@ export {
   extractTransferError,
 } from './transfer.js';
 
-// ConnectError（接続エラー）
+// ConnectError (connection error)
 export type { ConnectError } from './connect.js';
 export {
   createConnectError,
@@ -30,7 +30,7 @@ export {
   extractConnectError,
 } from './connect.js';
 
-// RequestError（リクエストエラー）
+// RequestError (request error)
 export type { RequestError } from './request.js';
 export {
   createRequestError,
@@ -39,7 +39,7 @@ export {
   extractRequestError,
 } from './request.js';
 
-// BadResponseError（4xx/5xx 基底）
+// BadResponseError (4xx/5xx base)
 export type { BadResponseError } from './bad-response.js';
 export {
   createBadResponseError,
@@ -48,7 +48,7 @@ export {
   extractBadResponseError,
 } from './bad-response.js';
 
-// ClientError（4xx エラー）
+// ClientError (4xx error)
 export type { ClientError } from './client.js';
 export {
   createClientError,
@@ -57,7 +57,7 @@ export {
   extractClientError,
 } from './client.js';
 
-// ServerError（5xx エラー）
+// ServerError (5xx error)
 export type { ServerError } from './server.js';
 export {
   createServerError,
@@ -66,7 +66,7 @@ export {
   extractServerError,
 } from './server.js';
 
-// TooManyRedirectsError（リダイレクト過多）
+// TooManyRedirectsError (too many redirects)
 export type { TooManyRedirectsError } from './too-many-redirects.js';
 export {
   createTooManyRedirectsError,
@@ -75,5 +75,5 @@ export {
   extractTooManyRedirectsError,
 } from './too-many-redirects.js';
 
-// エラーメッセージフォーマッター
+// Error message formatter
 export { formatErrorMessage, summarizeBody, summarizeBodyStream } from './formatter.js';

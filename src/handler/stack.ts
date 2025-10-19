@@ -1,5 +1,5 @@
 /**
- * ハンドラースタックとミドルウェアチェーン管理
+ * Handler stack and middleware chain management
  */
 
 import type { HttpRequest } from '../message/request';
@@ -10,7 +10,7 @@ import type { CookieJar } from '../cookie/jar.js';
 const ERROR_NO_HANDLER = 'No handler has been set';
 
 /**
- * マルチパートアイテムの型
+ * Multipart item type
  */
 export type MultipartItem = {
   readonly name: string;
@@ -20,7 +20,7 @@ export type MultipartItem = {
 };
 
 /**
- * 転送統計情報の型
+ * Transfer statistics information type
  */
 export type TransferStats = {
   readonly request: HttpRequest;
@@ -30,7 +30,7 @@ export type TransferStats = {
 };
 
 /**
- * リダイレクト詳細設定の型
+ * Redirect detailed configuration type
  */
 export type RedirectConfig = {
   readonly max: number;
@@ -41,7 +41,7 @@ export type RedirectConfig = {
 };
 
 /**
- * プロキシ詳細設定の型
+ * Proxy detailed configuration type
  */
 export type ProxyConfig = {
   readonly http?: string;
@@ -50,77 +50,77 @@ export type ProxyConfig = {
 };
 
 /**
- * リクエストオプションの型
- * Guzzle RequestOptions に相当する完全な型定義
+ * Request options type
+ * Complete type definition corresponding to Guzzle RequestOptions
  */
 export type RequestOptions = {
-  /** リダイレクト設定 */
+  /** Redirect configuration */
   readonly allowRedirects?: boolean | RedirectConfig;
 
-  /** 認証情報 [username, password, type] */
+  /** Authentication credentials [username, password, type] */
   readonly auth?: readonly [string, string, 'basic' | 'digest' | 'ntlm'];
 
-  /** リクエストボディ */
+  /** Request body */
   readonly body?: string | Blob | ReadableStream<Uint8Array> | null;
 
-  /** SSL証明書 */
+  /** SSL certificate */
   readonly cert?: string | readonly [string, string];
 
-  /** Cookie管理 */
+  /** Cookie management */
   readonly cookies?: CookieJar | boolean;
 
-  /** 接続タイムアウト（ミリ秒） */
+  /** Connection timeout (milliseconds) */
   readonly connectTimeout?: number;
 
-  /** リクエストタイムアウト（ミリ秒） */
+  /** Request timeout (milliseconds) */
   readonly timeout?: number;
 
-  /** 読み取りタイムアウト（ミリ秒） */
+  /** Read timeout (milliseconds) */
   readonly readTimeout?: number;
 
-  /** 暗号化方式 */
+  /** Encryption method */
   readonly cryptoMethod?: string;
 
-  /** デバッグ出力 */
+  /** Debug output */
   readonly debug?: boolean | NodeJS.WriteStream;
 
-  /** コンテンツデコード */
+  /** Content decoding */
   readonly decodeContent?: boolean | string;
 
-  /** 遅延（ミリ秒） */
+  /** Delay (milliseconds) */
   readonly delay?: number;
 
-  /** Expectヘッダー */
+  /** Expect header */
   readonly expect?: boolean | number;
 
-  /** IP解決の強制 */
+  /** Force IP resolution */
   readonly forceIpResolve?: 'v4' | 'v6';
 
-  /** フォームパラメータ（application/x-www-form-urlencoded） */
+  /** Form parameters (application/x-www-form-urlencoded) */
   readonly formParams?: Record<string, string>;
 
-  /** HTTPヘッダー */
+  /** HTTP headers */
   readonly headers?: Readonly<Record<string, HeaderValue>>;
 
-  /** HTTPエラー例外化 */
+  /** HTTP error exception */
   readonly httpErrors?: boolean;
 
-  /** IDN変換 */
+  /** IDN conversion */
   readonly idnConversion?: boolean | number;
 
-  /** JSONボディ（application/json） */
+  /** JSON body (application/json) */
   readonly json?: unknown;
 
-  /** マルチパートデータ */
+  /** Multipart data */
   readonly multipart?: readonly MultipartItem[];
 
-  /** ヘッダー受信時のコールバック */
+  /** Callback on headers received */
   readonly onHeaders?: (response: HttpResponse) => void;
 
-  /** 転送統計のコールバック */
+  /** Transfer statistics callback */
   readonly onStats?: (stats: TransferStats) => void;
 
-  /** 進捗コールバック */
+  /** Progress callback */
   readonly progress?: (
     downloadTotal: number,
     downloadNow: number,
@@ -128,45 +128,45 @@ export type RequestOptions = {
     uploadNow: number,
   ) => void;
 
-  /** プロキシ設定 */
+  /** Proxy configuration */
   readonly proxy?: string | ProxyConfig;
 
-  /** クエリパラメータ */
+  /** Query parameters */
   readonly query?: Record<string, string> | string;
 
-  /** 出力先 */
+  /** Output destination */
   readonly sink?: string | NodeJS.WriteStream;
 
-  /** SSLキー */
+  /** SSL key */
   readonly sslKey?: string | readonly [string, string];
 
-  /** ストリームモード */
+  /** Stream mode */
   readonly stream?: boolean;
 
-  /** 同期フラグ */
+  /** Synchronous flag */
   readonly synchronous?: boolean;
 
-  /** SSL検証 */
+  /** SSL verification */
   readonly verify?: boolean | string;
 
-  /** HTTPバージョン */
+  /** HTTP version */
   readonly version?: '1.0' | '1.1' | '2.0' | '3.0';
 };
 
 /**
- * ハンドラー関数の型
- * HTTPリクエストを受け取り、レスポンスを返す
+ * Handler function type
+ * Receives an HTTP request and returns a response
  */
 export type Handler = (request: HttpRequest, options: RequestOptions) => Promise<HttpResponse>;
 
 /**
- * ミドルウェア関数の型
- * ハンドラーをラップして新しいハンドラーを返す
+ * Middleware function type
+ * Wraps a handler and returns a new handler
  */
 export type Middleware = (next: Handler) => Handler;
 
 /**
- * ミドルウェアスタックアイテム
+ * Middleware stack item
  */
 export type StackItem = {
   readonly middleware: Middleware;
@@ -174,13 +174,13 @@ export type StackItem = {
 };
 
 /**
- * ハンドラースタック
+ * Handler stack
  */
 export interface HandlerStack {
   readonly handler: Handler | null;
   readonly stack: readonly StackItem[];
 
-  // メソッドスタイル
+  // Method style
   readonly setHandler: (handler: Handler) => HandlerStack;
   readonly push: (middleware: Middleware, name: string) => HandlerStack;
   readonly unshift: (middleware: Middleware, name: string) => HandlerStack;
@@ -192,10 +192,10 @@ export interface HandlerStack {
 }
 
 /**
- * 新しいハンドラースタックを生成する
+ * Creates a new handler stack
  *
- * @param handler - デフォルトハンドラー（省略可）
- * @returns 新しいハンドラースタック
+ * @param handler - Default handler (optional)
+ * @returns New handler stack
  */
 export const HandlerStack = (handler?: Handler): HandlerStack => ({
   handler: handler ?? null,

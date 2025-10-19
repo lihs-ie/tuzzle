@@ -1,30 +1,25 @@
 /**
- * RequestError - リクエストエラー型
- * HTTPリクエストの送信時に発生したエラーを表現します
- * BadResponseError と TooManyRedirectsError の親となります
+ * RequestError - Request error type
+ * Represents errors that occur when sending HTTP requests
+ * Parent of BadResponseError and TooManyRedirectsError
  */
 
 import type { HttpRequest } from '../message/request.js';
+import { isRequestError as isRequestErrorGuard, type BaseRequestError } from './common.js';
 
 /**
- * RequestError 型定義
- * TransferError の構造を継承しつつ、リクエストエラーを表現します
+ * RequestError type definition
+ * Inherits the structure of TransferError and represents request errors
  */
-export type RequestError = {
-  readonly type: 'RequestError';
-  readonly message: string;
-  readonly request: HttpRequest;
-  readonly cause?: Error;
-  readonly stack?: string;
-};
+export type RequestError = BaseRequestError<'RequestError'>;
 
 /**
- * RequestError を作成する
+ * Creates a RequestError
  *
- * @param message - エラーメッセージ
- * @param request - HTTPリクエスト
- * @param options - オプション（cause, stack）
- * @returns RequestError オブジェクト
+ * @param message - Error message
+ * @param request - HTTP request
+ * @param options - Options (cause, stack)
+ * @returns RequestError object
  *
  * @example
  * ```typescript
@@ -49,10 +44,10 @@ export const createRequestError = (
 };
 
 /**
- * 値が RequestError かどうかを判定する型ガード
+ * Type guard to check if a value is a RequestError
  *
- * @param value - 判定対象の値
- * @returns RequestError の場合は true
+ * @param value - Value to check
+ * @returns true if the value is a RequestError
  *
  * @example
  * ```typescript
@@ -61,25 +56,13 @@ export const createRequestError = (
  * }
  * ```
  */
-export const isRequestError = (value: unknown): value is RequestError => {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const obj = value as Record<string, unknown>;
-  return (
-    obj.type === 'RequestError' &&
-    typeof obj.message === 'string' &&
-    typeof obj.request === 'object' &&
-    obj.request !== null
-  );
-};
+export const isRequestError = isRequestErrorGuard<RequestError>('RequestError');
 
 /**
- * RequestError を JavaScript の Error として throw する
+ * Throws a RequestError as a JavaScript Error
  *
- * @param error - RequestError オブジェクト
- * @throws JavaScript Error（cause に RequestError を含む）
+ * @param error - RequestError object
+ * @throws JavaScript Error (with RequestError in cause)
  *
  * @example
  * ```typescript
@@ -96,10 +79,10 @@ export const throwRequestError = (error: RequestError): never => {
 };
 
 /**
- * JavaScript Error から RequestError を抽出する
+ * Extracts a RequestError from a JavaScript Error
  *
  * @param error - JavaScript Error
- * @returns 抽出された RequestError、見つからない場合は null
+ * @returns Extracted RequestError, or null if not found
  *
  * @example
  * ```typescript

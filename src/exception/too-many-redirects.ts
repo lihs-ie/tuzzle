@@ -1,31 +1,27 @@
 /**
- * TooManyRedirectsError - リダイレクト過多エラー型
- * リダイレクトの最大回数を超えた場合のエラーを表現します
+ * TooManyRedirectsError - Too many redirects error type
+ * Represents errors when the maximum number of redirects is exceeded
  */
 
 import type { HttpRequest } from '../message/request.js';
+import { isRequestError, type BaseRequestError } from './common.js';
 
 /**
- * TooManyRedirectsError 型定義
- * RequestError の構造を継承しつつ、リダイレクト過多エラーを表現します
+ * TooManyRedirectsError type definition
+ * Inherits the structure of RequestError and represents too many redirects errors
  */
-export type TooManyRedirectsError = {
-  readonly type: 'TooManyRedirectsError';
-  readonly message: string;
-  readonly request: HttpRequest;
+export type TooManyRedirectsError = BaseRequestError<'TooManyRedirectsError'> & {
   readonly redirectCount: number;
-  readonly cause?: Error;
-  readonly stack?: string;
 };
 
 /**
- * TooManyRedirectsError を作成する
+ * Creates a TooManyRedirectsError
  *
- * @param message - エラーメッセージ
- * @param request - HTTPリクエスト
- * @param redirectCount - リダイレクト回数
- * @param options - オプション（cause, stack）
- * @returns TooManyRedirectsError オブジェクト
+ * @param message - Error message
+ * @param request - HTTP request
+ * @param redirectCount - Number of redirects
+ * @param options - Options (cause, stack)
+ * @returns TooManyRedirectsError object
  *
  * @example
  * ```typescript
@@ -51,10 +47,10 @@ export const createTooManyRedirectsError = (
 };
 
 /**
- * 値が TooManyRedirectsError かどうかを判定する型ガード
+ * Type guard to check if a value is a TooManyRedirectsError
  *
- * @param value - 判定対象の値
- * @returns TooManyRedirectsError の場合は true
+ * @param value - Value to check
+ * @returns true if the value is a TooManyRedirectsError
  *
  * @example
  * ```typescript
@@ -63,26 +59,22 @@ export const createTooManyRedirectsError = (
  * }
  * ```
  */
-export const isTooManyRedirectsError = (value: unknown): value is TooManyRedirectsError => {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
+export const isTooManyRedirectsError = isRequestError<TooManyRedirectsError>(
+  'TooManyRedirectsError',
+  (candidate) => {
+    if (typeof candidate.redirectCount !== 'number') {
+      return false;
+    }
 
-  const obj = value as Record<string, unknown>;
-  return (
-    obj.type === 'TooManyRedirectsError' &&
-    typeof obj.message === 'string' &&
-    typeof obj.request === 'object' &&
-    obj.request !== null &&
-    typeof obj.redirectCount === 'number'
-  );
-};
+    return true;
+  },
+);
 
 /**
- * TooManyRedirectsError を JavaScript の Error として throw する
+ * Throws a TooManyRedirectsError as a JavaScript Error
  *
- * @param error - TooManyRedirectsError オブジェクト
- * @throws JavaScript Error（cause に TooManyRedirectsError を含む）
+ * @param error - TooManyRedirectsError object
+ * @throws JavaScript Error (with TooManyRedirectsError in cause)
  *
  * @example
  * ```typescript
@@ -99,10 +91,10 @@ export const throwTooManyRedirectsError = (error: TooManyRedirectsError): never 
 };
 
 /**
- * JavaScript Error から TooManyRedirectsError を抽出する
+ * Extracts a TooManyRedirectsError from a JavaScript Error
  *
  * @param error - JavaScript Error
- * @returns 抽出された TooManyRedirectsError、見つからない場合は null
+ * @returns Extracted TooManyRedirectsError, or null if not found
  *
  * @example
  * ```typescript

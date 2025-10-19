@@ -1,22 +1,22 @@
 /**
- * ミドルウェアヘルパー関数
- * Guzzle の Middleware クラスに相当
+ * Middleware helper functions
+ * Equivalent to Guzzle's Middleware class
  */
 
 import type { HttpRequest } from '../message/request';
 import type { HttpResponse } from '../message/response';
 import type { Handler, Middleware, RequestOptions } from '../handler/stack';
 
-// HTTPエラーミドルウェア
+// HTTP error middleware
 export { httpErrors } from './http-errors.js';
 
 /**
- * リクエスト送信前に実行されるコールバック関数の型
+ * Callback function type executed before sending a request
  */
 export type TapBeforeFn = (request: HttpRequest, options: RequestOptions) => void;
 
 /**
- * レスポンス受信後に実行されるコールバック関数の型
+ * Callback function type executed after receiving a response
  */
 export type TapAfterFn = (
   request: HttpRequest,
@@ -25,10 +25,10 @@ export type TapAfterFn = (
 ) => void;
 
 /**
- * リクエストに対してマッピング関数を適用するミドルウェア
+ * Middleware that applies a mapping function to a request
  *
- * @param fn - リクエスト変換関数
- * @returns ミドルウェア
+ * @param fn - Request transformation function
+ * @returns Middleware
  *
  * @example
  * ```typescript
@@ -47,10 +47,10 @@ export const mapRequest = (fn: (request: HttpRequest) => HttpRequest): Middlewar
 };
 
 /**
- * レスポンスに対してマッピング関数を適用するミドルウェア
+ * Middleware that applies a mapping function to a response
  *
- * @param fn - レスポンス変換関数
- * @returns ミドルウェア
+ * @param fn - Response transformation function
+ * @returns Middleware
  *
  * @example
  * ```typescript
@@ -70,12 +70,12 @@ export const mapResponse = (fn: (response: HttpResponse) => HttpResponse): Middl
 };
 
 /**
- * リクエスト/レスポンスを監視するミドルウェア
- * リクエスト・レスポンスは変更せず、ロギングなどに使用
+ * Middleware that observes requests/responses
+ * Does not modify request/response, useful for logging and similar purposes
  *
- * @param before - リクエスト送信前に実行される関数（省略可）
- * @param after - レスポンス受信後に実行される関数（省略可）
- * @returns ミドルウェア
+ * @param before - Function executed before sending request (optional)
+ * @param after - Function executed after receiving response (optional)
+ * @returns Middleware
  *
  * @example
  * ```typescript
@@ -104,10 +104,10 @@ export const tap = (before?: TapBeforeFn, after?: TapAfterFn): Middleware => {
 };
 
 /**
- * リクエストに対して非同期マッピング関数を適用するミドルウェア
+ * Middleware that applies an async mapping function to a request
  *
- * @param fn - 非同期リクエスト変換関数
- * @returns ミドルウェア
+ * @param fn - Async request transformation function
+ * @returns Middleware
  *
  * @example
  * ```typescript
@@ -127,10 +127,10 @@ export const mapRequestAsync = (fn: (request: HttpRequest) => Promise<HttpReques
 };
 
 /**
- * レスポンスに対して非同期マッピング関数を適用するミドルウェア
+ * Middleware that applies an async mapping function to a response
  *
- * @param fn - 非同期レスポンス変換関数
- * @returns ミドルウェア
+ * @param fn - Async response transformation function
+ * @returns Middleware
  *
  * @example
  * ```typescript
@@ -152,11 +152,11 @@ export const mapResponseAsync = (
 };
 
 /**
- * 条件付きでミドルウェアを適用する
+ * Conditionally applies middleware
  *
- * @param condition - ミドルウェアを適用するかどうかを判定する関数
- * @param middleware - 条件が真の場合に適用するミドルウェア
- * @returns ミドルウェア
+ * @param condition - Function that determines whether to apply the middleware
+ * @param middleware - Middleware to apply when condition is true
+ * @returns Middleware
  *
  * @example
  * ```typescript
@@ -182,16 +182,16 @@ export const conditional = (
 };
 
 /**
- * エラーハンドリングミドルウェアを作成する
+ * Creates an error handling middleware
  *
- * @param onError - エラー時に実行される関数
- * @returns ミドルウェア
+ * @param onError - Function executed when an error occurs
+ * @returns Middleware
  *
  * @example
  * ```typescript
  * const errorLogger = handleErrors((error, request) => {
  *   console.error('Request failed:', request.uri, error.message);
- *   throw error; // エラーを再スロー
+ *   throw error; // Re-throw the error
  * });
  * ```
  */
@@ -211,10 +211,10 @@ export const handleErrors = (
 };
 
 /**
- * ミドルウェアを組み合わせて一つのミドルウェアにする
+ * Composes multiple middlewares into a single middleware
  *
- * @param middlewares - 組み合わせるミドルウェアの配列
- * @returns 組み合わせたミドルウェア
+ * @param middlewares - Array of middlewares to compose
+ * @returns Composed middleware
  *
  * @example
  * ```typescript

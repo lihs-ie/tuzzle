@@ -1,33 +1,29 @@
 /**
- * BadResponseError - 不正なレスポンスエラー型
- * 4xx/5xx HTTP エラーレスポンスを表現します
- * ClientError と ServerError の親となります
+ * BadResponseError - Bad response error type
+ * Represents 4xx/5xx HTTP error responses
+ * Parent of ClientError and ServerError
  */
 
 import type { HttpRequest } from '../message/request.js';
 import type { HttpResponse } from '../message/response.js';
+import { isRequestError, type BaseRequestError } from './common.js';
 
 /**
- * BadResponseError 型定義
- * RequestError の構造を継承しつつ、HTTPレスポンスを含みます
+ * BadResponseError type definition
+ * Inherits the structure of RequestError and includes HTTP response
  */
-export type BadResponseError = {
-  readonly type: 'BadResponseError';
-  readonly message: string;
-  readonly request: HttpRequest;
+export type BadResponseError = BaseRequestError<'BadResponseError'> & {
   readonly response: HttpResponse;
-  readonly cause?: Error;
-  readonly stack?: string;
 };
 
 /**
- * BadResponseError を作成する
+ * Creates a BadResponseError
  *
- * @param message - エラーメッセージ
- * @param request - HTTPリクエスト
- * @param response - HTTPレスポンス
- * @param options - オプション（cause, stack）
- * @returns BadResponseError オブジェクト
+ * @param message - Error message
+ * @param request - HTTP request
+ * @param response - HTTP response
+ * @param options - Options (cause, stack)
+ * @returns BadResponseError object
  *
  * @example
  * ```typescript
@@ -53,10 +49,10 @@ export const createBadResponseError = (
 };
 
 /**
- * 値が BadResponseError かどうかを判定する型ガード
+ * Type guard to check if a value is a BadResponseError
  *
- * @param value - 判定対象の値
- * @returns BadResponseError の場合は true
+ * @param value - Value to check
+ * @returns true if the value is a BadResponseError
  *
  * @example
  * ```typescript
@@ -65,27 +61,22 @@ export const createBadResponseError = (
  * }
  * ```
  */
-export const isBadResponseError = (value: unknown): value is BadResponseError => {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
+export const isBadResponseError = isRequestError<BadResponseError>(
+  'BadResponseError',
+  (candidate) => {
+    if (typeof candidate.response !== 'object' || candidate.response === null) {
+      return false;
+    }
 
-  const obj = value as Record<string, unknown>;
-  return (
-    obj.type === 'BadResponseError' &&
-    typeof obj.message === 'string' &&
-    typeof obj.request === 'object' &&
-    obj.request !== null &&
-    typeof obj.response === 'object' &&
-    obj.response !== null
-  );
-};
+    return true;
+  },
+);
 
 /**
- * BadResponseError を JavaScript の Error として throw する
+ * Throws a BadResponseError as a JavaScript Error
  *
- * @param error - BadResponseError オブジェクト
- * @throws JavaScript Error（cause に BadResponseError を含む）
+ * @param error - BadResponseError object
+ * @throws JavaScript Error (with BadResponseError in cause)
  *
  * @example
  * ```typescript
@@ -102,10 +93,10 @@ export const throwBadResponseError = (error: BadResponseError): never => {
 };
 
 /**
- * JavaScript Error から BadResponseError を抽出する
+ * Extracts a BadResponseError from a JavaScript Error
  *
  * @param error - JavaScript Error
- * @returns 抽出された BadResponseError、見つからない場合は null
+ * @returns Extracted BadResponseError, or null if not found
  *
  * @example
  * ```typescript

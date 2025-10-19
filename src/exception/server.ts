@@ -1,32 +1,28 @@
 /**
- * ServerError - サーバーエラー型
- * 5xx HTTPステータスコードのエラーレスポンスを表現します
+ * ServerError - Server error type
+ * Represents error responses with 5xx HTTP status codes
  */
 
 import type { HttpRequest } from '../message/request.js';
 import type { HttpResponse } from '../message/response.js';
+import { isRequestError, type BaseRequestError } from './common.js';
 
 /**
- * ServerError 型定義
- * BadResponseError の構造を継承しつつ、5xx エラーを表現します
+ * ServerError type definition
+ * Inherits the structure of BadResponseError and represents 5xx errors
  */
-export type ServerError = {
-  readonly type: 'ServerError';
-  readonly message: string;
-  readonly request: HttpRequest;
+export type ServerError = BaseRequestError<'ServerError'> & {
   readonly response: HttpResponse;
-  readonly cause?: Error;
-  readonly stack?: string;
 };
 
 /**
- * ServerError を作成する
+ * Creates a ServerError
  *
- * @param message - エラーメッセージ
- * @param request - HTTPリクエスト
- * @param response - HTTPレスポンス（5xx ステータスコード）
- * @param options - オプション（cause, stack）
- * @returns ServerError オブジェクト
+ * @param message - Error message
+ * @param request - HTTP request
+ * @param response - HTTP response (with 5xx status code)
+ * @param options - Options (cause, stack)
+ * @returns ServerError object
  *
  * @example
  * ```typescript
@@ -52,10 +48,10 @@ export const createServerError = (
 };
 
 /**
- * 値が ServerError かどうかを判定する型ガード
+ * Type guard to check if a value is a ServerError
  *
- * @param value - 判定対象の値
- * @returns ServerError の場合は true
+ * @param value - Value to check
+ * @returns true if the value is a ServerError
  *
  * @example
  * ```typescript
@@ -64,27 +60,19 @@ export const createServerError = (
  * }
  * ```
  */
-export const isServerError = (value: unknown): value is ServerError => {
-  if (typeof value !== 'object' || value === null) {
+export const isServerError = isRequestError<ServerError>('ServerError', (candidate) => {
+  if (typeof candidate.response !== 'object' || candidate.response === null) {
     return false;
   }
 
-  const obj = value as Record<string, unknown>;
-  return (
-    obj.type === 'ServerError' &&
-    typeof obj.message === 'string' &&
-    typeof obj.request === 'object' &&
-    obj.request !== null &&
-    typeof obj.response === 'object' &&
-    obj.response !== null
-  );
-};
+  return true;
+});
 
 /**
- * ServerError を JavaScript の Error として throw する
+ * Throws a ServerError as a JavaScript Error
  *
- * @param error - ServerError オブジェクト
- * @throws JavaScript Error（cause に ServerError を含む）
+ * @param error - ServerError object
+ * @throws JavaScript Error (with ServerError in cause)
  *
  * @example
  * ```typescript
@@ -101,10 +89,10 @@ export const throwServerError = (error: ServerError): never => {
 };
 
 /**
- * JavaScript Error から ServerError を抽出する
+ * Extracts a ServerError from a JavaScript Error
  *
  * @param error - JavaScript Error
- * @returns 抽出された ServerError、見つからない場合は null
+ * @returns Extracted ServerError, or null if not found
  *
  * @example
  * ```typescript

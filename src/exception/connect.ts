@@ -1,29 +1,24 @@
 /**
- * ConnectError - 接続エラー型
- * サーバーへの接続に失敗した場合のエラーを表現します
+ * ConnectError - Connection error type
+ * Represents errors when connection to server fails
  */
 
 import type { HttpRequest } from '../message/request.js';
+import { isRequestError, type BaseRequestError } from './common.js';
 
 /**
- * ConnectError 型定義
- * TransferError の構造を継承しつつ、接続エラーを表現します
+ * ConnectError type definition
+ * Inherits the structure of TransferError and represents connection errors
  */
-export type ConnectError = {
-  readonly type: 'ConnectError';
-  readonly message: string;
-  readonly request: HttpRequest;
-  readonly cause?: Error;
-  readonly stack?: string;
-};
+export type ConnectError = BaseRequestError<'ConnectError'>;
 
 /**
- * ConnectError を作成する
+ * Creates a ConnectError
  *
- * @param message - エラーメッセージ
- * @param request - HTTPリクエスト
- * @param options - オプション（cause, stack）
- * @returns ConnectError オブジェクト
+ * @param message - Error message
+ * @param request - HTTP request
+ * @param options - Options (cause, stack)
+ * @returns ConnectError object
  *
  * @example
  * ```typescript
@@ -48,10 +43,10 @@ export const createConnectError = (
 };
 
 /**
- * 値が ConnectError かどうかを判定する型ガード
+ * Type guard to check if a value is a ConnectError
  *
- * @param value - 判定対象の値
- * @returns ConnectError の場合は true
+ * @param value - Value to check
+ * @returns true if the value is a ConnectError
  *
  * @example
  * ```typescript
@@ -60,25 +55,13 @@ export const createConnectError = (
  * }
  * ```
  */
-export const isConnectError = (value: unknown): value is ConnectError => {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const obj = value as Record<string, unknown>;
-  return (
-    obj.type === 'ConnectError' &&
-    typeof obj.message === 'string' &&
-    typeof obj.request === 'object' &&
-    obj.request !== null
-  );
-};
+export const isConnectError = isRequestError<ConnectError>('ConnectError');
 
 /**
- * ConnectError を JavaScript の Error として throw する
+ * Throws a ConnectError as a JavaScript Error
  *
- * @param error - ConnectError オブジェクト
- * @throws JavaScript Error（cause に ConnectError を含む）
+ * @param error - ConnectError object
+ * @throws JavaScript Error (with ConnectError in cause)
  *
  * @example
  * ```typescript
@@ -95,10 +78,10 @@ export const throwConnectError = (error: ConnectError): never => {
 };
 
 /**
- * JavaScript Error から ConnectError を抽出する
+ * Extracts a ConnectError from a JavaScript Error
  *
  * @param error - JavaScript Error
- * @returns 抽出された ConnectError、見つからない場合は null
+ * @returns Extracted ConnectError, or null if not found
  *
  * @example
  * ```typescript

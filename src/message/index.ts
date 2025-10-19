@@ -1,6 +1,6 @@
 /**
- * メッセージモジュール
- * PSR-7相当のHTTPメッセージ型と操作関数を提供
+ * Message module
+ * Provides PSR-7 equivalent HTTP message types and operation functions
  */
 
 // Headers

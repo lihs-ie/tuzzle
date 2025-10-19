@@ -1,5 +1,5 @@
 /**
- * ハンドラー関連の再エクスポート
+ * Handler-related re-exports
  */
 
 export * from './stack';

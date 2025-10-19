@@ -1,6 +1,6 @@
 /**
- * HTTPエラーミドルウェア
- * httpErrors オプションが true の場合、4xx/5xx レスポンスを例外としてスローします
+ * HTTP Error Middleware
+ * When httpErrors option is true, throws 4xx/5xx responses as exceptions
  */
 
 import type { Middleware } from '../handler/stack.js';
@@ -9,12 +9,12 @@ import { createServerError, throwServerError } from '../exception/server.js';
 import { formatErrorMessage } from '../exception/formatter.js';
 
 /**
- * HTTPエラーを例外化するミドルウェア
+ * Middleware that converts HTTP errors into exceptions
  *
- * RequestOptions の httpErrors が true の場合、
- * 4xx レスポンスは ClientError、5xx レスポンスは ServerError としてスローされます
+ * When RequestOptions.httpErrors is true,
+ * 4xx responses are thrown as ClientError, 5xx responses as ServerError
  *
- * @returns ミドルウェア関数
+ * @returns Middleware function
  *
  * @example
  * ```typescript
@@ -26,14 +26,14 @@ export const httpErrors = (): Middleware => {
   return (next) => async (request, options) => {
     const response = await next(request, options);
 
-    // httpErrors オプションが false または未設定の場合はスキップ
+    // Skip if httpErrors option is false or not set
     if (!options.httpErrors) {
       return response;
     }
 
     const statusCode = response.statusCode;
 
-    // 4xx クライアントエラー
+    // 4xx Client errors
     if (statusCode >= 400 && statusCode < 500) {
       const message = formatErrorMessage(
         `Client error: ${statusCode} ${response.reasonPhrase}`,
@@ -44,7 +44,7 @@ export const httpErrors = (): Middleware => {
       throwClientError(error);
     }
 
-    // 5xx サーバーエラー
+    // 5xx Server errors
     if (statusCode >= 500 && statusCode < 600) {
       const message = formatErrorMessage(
         `Server error: ${statusCode} ${response.reasonPhrase}`,

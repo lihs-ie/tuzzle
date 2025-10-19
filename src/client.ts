@@ -1,5 +1,5 @@
 /**
- * HTTP クライアントコア実装
+ * HTTP client core implementation
  */
 
 import type { Method } from './method';
@@ -13,7 +13,7 @@ import { HandlerStack as createHandlerStack } from './handler/stack';
 import { FetchHandler } from './handler/fetch';
 
 /**
- * クライアント設定の型
+ * Client configuration type
  */
 export type ClientConfig = {
   readonly baseURL?: string;
@@ -25,37 +25,37 @@ export type ClientConfig = {
 };
 
 /**
- * baseURL と相対 URI を結合する
+ * Combines baseURL and relative URI
  *
- * @param baseURL - ベース URL（省略可）
- * @param uri - リクエスト URI
- * @returns 結合された URL
+ * @param baseURL - Base URL (optional)
+ * @param uri - Request URI
+ * @returns Combined URL
  */
 const buildUri = (baseURL: string | undefined, uri: string): string => {
   if (!baseURL) {
     return uri;
   }
 
-  // 絶対URLの場合はそのまま返す
+  // Return as-is if absolute URL
   if (uri.startsWith('http://') || uri.startsWith('https://')) {
     return uri;
   }
 
-  // baseURLの末尾のスラッシュを削除
+  // Remove trailing slash from baseURL
   const normalizedBase = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
 
-  // uriの先頭のスラッシュを確保
+  // Ensure leading slash in uri
   const normalizedUri = uri.startsWith('/') ? uri : `/${uri}`;
 
   return `${normalizedBase}${normalizedUri}`;
 };
 
 /**
- * クライアント設定とリクエストオプションをマージする
+ * Merges client configuration and request options
  *
- * @param clientConfig - クライアント設定
- * @param requestOptions - リクエストオプション
- * @returns マージされたオプション
+ * @param clientConfig - Client configuration
+ * @param requestOptions - Request options
+ * @returns Merged options
  */
 const mergeOptions = (
   clientConfig: ClientConfig,
@@ -86,10 +86,10 @@ export interface HttpClient {
 }
 
 /**
- * HTTP クライアントを生成する
+ * Creates an HTTP client
  *
- * @param config - クライアント設定（省略可）
- * @returns HTTP クライアントオブジェクト
+ * @param config - Client configuration (optional)
+ * @returns HTTP client object
  *
  * @example
  * ```typescript
@@ -98,7 +98,7 @@ export interface HttpClient {
  * ```
  */
 export const HttpClient = (config?: Partial<ClientConfig>): HttpClient => {
-  // デフォルト設定
+  // Default configuration
   const clientConfig: ClientConfig = {
     baseURL: config?.baseURL,
     timeout: config?.timeout,
@@ -108,7 +108,7 @@ export const HttpClient = (config?: Partial<ClientConfig>): HttpClient => {
     handlerStack: config?.handlerStack,
   };
 
-  // ハンドラースタックの準備
+  // Prepare handler stack
   let stack = clientConfig.handlerStack ?? createHandlerStack();
   if (!clientConfig.handlerStack) {
     stack = stack.setHandler(FetchHandler());
@@ -117,12 +117,12 @@ export const HttpClient = (config?: Partial<ClientConfig>): HttpClient => {
   const handler = stack.resolve();
 
   /**
-   * 汎用リクエストメソッド
+   * Generic request method
    *
-   * @param method - HTTP メソッド
-   * @param uri - リクエスト URI
-   * @param options - リクエストオプション（省略可）
-   * @returns レスポンスの Promise
+   * @param method - HTTP method
+   * @param uri - Request URI
+   * @param options - Request options (optional)
+   * @returns Promise of response
    */
   const request = async (
     method: Method,
@@ -141,86 +141,86 @@ export const HttpClient = (config?: Partial<ClientConfig>): HttpClient => {
   };
 
   /**
-   * GET リクエストを送信する
+   * Sends a GET request
    *
-   * @param uri - リクエスト URI
-   * @param options - リクエストオプション（省略可）
-   * @returns レスポンスの Promise
+   * @param uri - Request URI
+   * @param options - Request options (optional)
+   * @returns Promise of response
    */
   const get = (uri: string, options: RequestOptions = {}): Promise<HttpResponse> => {
     return request('GET', uri, options);
   };
 
   /**
-   * POST リクエストを送信する
+   * Sends a POST request
    *
-   * @param uri - リクエスト URI
-   * @param options - リクエストオプション（省略可）
-   * @returns レスポンスの Promise
+   * @param uri - Request URI
+   * @param options - Request options (optional)
+   * @returns Promise of response
    */
   const post = (uri: string, options: RequestOptions = {}): Promise<HttpResponse> => {
     return request('POST', uri, options);
   };
 
   /**
-   * PUT リクエストを送信する
+   * Sends a PUT request
    *
-   * @param uri - リクエスト URI
-   * @param options - リクエストオプション（省略可）
-   * @returns レスポンスの Promise
+   * @param uri - Request URI
+   * @param options - Request options (optional)
+   * @returns Promise of response
    */
   const put = (uri: string, options: RequestOptions = {}): Promise<HttpResponse> => {
     return request('PUT', uri, options);
   };
 
   /**
-   * DELETE リクエストを送信する
+   * Sends a DELETE request
    *
-   * @param uri - リクエスト URI
-   * @param options - リクエストオプション（省略可）
-   * @returns レスポンスの Promise
+   * @param uri - Request URI
+   * @param options - Request options (optional)
+   * @returns Promise of response
    */
   const deleteMethod = (uri: string, options: RequestOptions = {}): Promise<HttpResponse> => {
     return request('DELETE', uri, options);
   };
 
   /**
-   * PATCH リクエストを送信する
+   * Sends a PATCH request
    *
-   * @param uri - リクエスト URI
-   * @param options - リクエストオプション（省略可）
-   * @returns レスポンスの Promise
+   * @param uri - Request URI
+   * @param options - Request options (optional)
+   * @returns Promise of response
    */
   const patch = (uri: string, options: RequestOptions = {}): Promise<HttpResponse> => {
     return request('PATCH', uri, options);
   };
 
   /**
-   * HEAD リクエストを送信する
+   * Sends a HEAD request
    *
-   * @param uri - リクエスト URI
-   * @param options - リクエストオプション（省略可）
-   * @returns レスポンスの Promise
+   * @param uri - Request URI
+   * @param options - Request options (optional)
+   * @returns Promise of response
    */
   const head = (uri: string, options: RequestOptions = {}): Promise<HttpResponse> => {
     return request('HEAD', uri, options);
   };
 
   /**
-   * OPTIONS リクエストを送信する
+   * Sends an OPTIONS request
    *
-   * @param uri - リクエスト URI
-   * @param options - リクエストオプション（省略可）
-   * @returns レスポンスの Promise
+   * @param uri - Request URI
+   * @param options - Request options (optional)
+   * @returns Promise of response
    */
   const options = (uri: string, requestOptions: RequestOptions = {}): Promise<HttpResponse> => {
     return request('OPTIONS', uri, requestOptions);
   };
 
   /**
-   * クライアント設定を取得する
+   * Gets the client configuration
    *
-   * @returns クライアント設定
+   * @returns Client configuration
    */
   const getConfig = (): Readonly<ClientConfig> => {
     return clientConfig;

@@ -1,11 +1,11 @@
 /**
- * HTTP ボディストリームの型定義と操作関数
+ * HTTP body stream type definitions and operation functions
  */
 
 type StreamContent = string | Blob | ReadableStream<Uint8Array> | null;
 
 /**
- * HTTP ボディストリームの型
+ * HTTP body stream type
  */
 export type HttpBodyStream = {
   readonly content: StreamContent;
@@ -14,10 +14,10 @@ export type HttpBodyStream = {
 };
 
 /**
- * ボディストリームを生成する
+ * Creates a body stream
  *
- * @param content - ストリームのコンテンツ（string | Blob | ReadableStream | null）
- * @returns 新しい HttpBodyStream オブジェクト
+ * @param content - Stream content (string | Blob | ReadableStream | null)
+ * @returns A new HttpBodyStream object
  */
 export const HttpBodyStream = (content: StreamContent): HttpBodyStream => {
   let size: number | null = null;
@@ -46,10 +46,10 @@ export const HttpBodyStream = (content: StreamContent): HttpBodyStream => {
 };
 
 /**
- * ストリームを文字列に変換する
+ * Converts a stream to a string
  *
- * @param stream - 変換対象のストリーム
- * @returns 文字列化されたコンテンツ
+ * @param stream - Stream to convert
+ * @returns Stringified content
  */
 export const streamToString = async (stream: HttpBodyStream): Promise<string> => {
   const { content } = stream;
@@ -84,17 +84,17 @@ export const streamToString = async (stream: HttpBodyStream): Promise<string> =>
 };
 
 /**
- * ストリームのサイズを取得する
+ * Gets the size of a stream
  *
- * @param stream - サイズ取得対象のストリーム
- * @returns ストリームのサイズ（バイト単位）。不明な場合は null
+ * @param stream - Stream to get the size of
+ * @returns Stream size in bytes. Returns null if unknown
  */
 export const getSize = (stream: HttpBodyStream): number | null => stream.size;
 
 /**
- * ストリームが読み取り可能かチェックする
+ * Checks if a stream is readable
  *
- * @param stream - チェック対象のストリーム
- * @returns 読み取り可能な場合は true
+ * @param stream - Stream to check
+ * @returns true if the stream is readable
  */
 export const isReadable = (stream: HttpBodyStream): boolean => stream.isReadable;

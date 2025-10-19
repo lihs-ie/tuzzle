@@ -1,29 +1,24 @@
 /**
- * TransferError - 転送エラー型
- * ネットワーク転送時のエラーを表現します
+ * TransferError - Transfer error type
+ * Represents errors during network transfer
  */
 
 import type { HttpRequest } from '../message/request.js';
+import { isRequestError, type BaseRequestError } from './common.js';
 
 /**
- * TransferError 型定義
- * TuzzleError の構造を継承しつつ、HttpRequest を含みます
+ * TransferError type definition
+ * Inherits the structure of TuzzleError and includes HttpRequest
  */
-export type TransferError = {
-  readonly type: 'TransferError';
-  readonly message: string;
-  readonly request: HttpRequest;
-  readonly cause?: Error;
-  readonly stack?: string;
-};
+export type TransferError = BaseRequestError<'TransferError'>;
 
 /**
- * TransferError を作成する
+ * Creates a TransferError
  *
- * @param message - エラーメッセージ
- * @param request - HTTPリクエスト
- * @param options - オプション（cause, stack）
- * @returns TransferError オブジェクト
+ * @param message - Error message
+ * @param request - HTTP request
+ * @param options - Options (cause, stack)
+ * @returns TransferError object
  *
  * @example
  * ```typescript
@@ -48,10 +43,10 @@ export const createTransferError = (
 };
 
 /**
- * 値が TransferError かどうかを判定する型ガード
+ * Type guard to check if a value is a TransferError
  *
- * @param value - 判定対象の値
- * @returns TransferError の場合は true
+ * @param value - Value to check
+ * @returns true if the value is a TransferError
  *
  * @example
  * ```typescript
@@ -60,25 +55,13 @@ export const createTransferError = (
  * }
  * ```
  */
-export const isTransferError = (value: unknown): value is TransferError => {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const obj = value as Record<string, unknown>;
-  return (
-    obj.type === 'TransferError' &&
-    typeof obj.message === 'string' &&
-    typeof obj.request === 'object' &&
-    obj.request !== null
-  );
-};
+export const isTransferError = isRequestError<TransferError>('TransferError');
 
 /**
- * TransferError を JavaScript の Error として throw する
+ * Throws a TransferError as a JavaScript Error
  *
- * @param error - TransferError オブジェクト
- * @throws JavaScript Error（cause に TransferError を含む）
+ * @param error - TransferError object
+ * @throws JavaScript Error (with TransferError in cause)
  *
  * @example
  * ```typescript
@@ -95,10 +78,10 @@ export const throwTransferError = (error: TransferError): never => {
 };
 
 /**
- * JavaScript Error から TransferError を抽出する
+ * Extracts a TransferError from a JavaScript Error
  *
  * @param error - JavaScript Error
- * @returns 抽出された TransferError、見つからない場合は null
+ * @returns Extracted TransferError, or null if not found
  *
  * @example
  * ```typescript

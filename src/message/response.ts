@@ -1,5 +1,5 @@
 /**
- * HTTP レスポンスの型定義と操作関数
+ * HTTP response type definitions and operation functions
  */
 
 import type { HttpBodyStream } from './stream';
@@ -10,7 +10,7 @@ const DEFAULT_HTTP_VERSION = '1.1';
 const HEADER_LINE_SEPARATOR = ', ';
 
 /**
- * HTTP ステータスコードと理由句のマッピング
+ * Mapping of HTTP status codes to reason phrases
  */
 const REASON_PHRASES: Readonly<Record<number, string>> = {
   200: 'OK',
@@ -31,15 +31,15 @@ const REASON_PHRASES: Readonly<Record<number, string>> = {
 };
 
 /**
- * ステータスコードから理由句を取得する
+ * Gets the reason phrase for a status code
  *
- * @param statusCode - HTTP ステータスコード
- * @returns 理由句。未定義の場合は空文字列
+ * @param statusCode - HTTP status code
+ * @returns Reason phrase. Returns empty string if undefined
  */
 const getReasonPhrase = (statusCode: number): string => REASON_PHRASES[statusCode] ?? '';
 
 /**
- * HTTP レスポンスの型
+ * HTTP response type
  */
 export interface HttpResponse {
   readonly statusCode: number;
@@ -48,7 +48,7 @@ export interface HttpResponse {
   readonly body: HttpBodyStream | null;
   readonly version: string;
 
-  // メソッドスタイル
+  // Method-style operations
   readonly withStatus: (statusCode: number, reasonPhrase?: string) => HttpResponse;
   readonly withHeader: (key: string, value: string | readonly string[]) => HttpResponse;
   readonly withoutHeader: (key: string) => HttpResponse;
@@ -60,11 +60,11 @@ export interface HttpResponse {
 }
 
 /**
- * 新しい HTTP レスポンスを生成する
+ * Creates a new HTTP response
  *
- * @param statusCode - HTTP ステータスコード
- * @param options - オプション設定（reasonPhrase, headers, body, version）
- * @returns 新しい HttpResponse オブジェクト
+ * @param statusCode - HTTP status code
+ * @param options - Optional settings (reasonPhrase, headers, body, version)
+ * @returns A new HttpResponse object
  */
 export const HttpResponse = (
   statusCode: number,

@@ -1,5 +1,5 @@
 /**
- * HTTP リクエストの型定義と操作関数
+ * HTTP request type definitions and operation functions
  */
 
 import type { Method } from '../method';
@@ -10,7 +10,7 @@ import type { HttpHeaders as HttpHeadersType } from './headers';
 const DEFAULT_HTTP_VERSION = '1.1';
 
 /**
- * HTTP リクエストの型
+ * HTTP request type
  */
 export interface HttpRequest {
   readonly method: Method;
@@ -19,7 +19,7 @@ export interface HttpRequest {
   readonly body: HttpBodyStream | null;
   readonly version: string;
 
-  // メソッドスタイル
+  // Method-style operations
   readonly withMethod: (method: Method) => HttpRequest;
   readonly withUri: (uri: string) => HttpRequest;
   readonly withHeader: (key: string, value: string | readonly string[]) => HttpRequest;
@@ -31,12 +31,12 @@ export interface HttpRequest {
 }
 
 /**
- * 新しい HTTP リクエストを生成する
+ * Creates a new HTTP request
  *
- * @param method - HTTP メソッド
- * @param uri - リクエスト URI
- * @param options - オプション設定（headers, body, version）
- * @returns 新しい HttpRequest オブジェクト
+ * @param method - HTTP method
+ * @param uri - Request URI
+ * @param options - Optional settings (headers, body, version)
+ * @returns A new HttpRequest object
  */
 export const HttpRequest = (
   method: Method,

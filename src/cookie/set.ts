@@ -1,10 +1,10 @@
 /**
- * SetCookie型定義とパーサー関数群
- * RFC 6265準拠のCookie処理を提供します
+ * SetCookie type definitions and parser functions
+ * Provides RFC 6265 compliant cookie handling
  */
 
 /**
- * SetCookie - Cookie情報を保持する型
+ * SetCookie - Type that holds cookie information
  */
 export type SetCookie = {
   readonly name: string;
@@ -22,18 +22,18 @@ const COOKIE_NAME_VALUE_PATTERN = /^([^=]+)=(.*)$/;
 const COOKIE_ATTRIBUTE_PATTERN = /^([^=]+)(?:=(.*))?$/;
 
 /**
- * RFC 6265で定義されている無効なCookie名文字
- * 制御文字(\x00-\x1F, \x7F)、スペース(\x20)、特殊文字(", (, ), ,, /, :, ;, <, =, >, ?, @, [, \, ], {, })
+ * Invalid cookie name characters defined in RFC 6265
+ * Control characters (\x00-\x1F, \x7F), space (\x20), special characters (", (, ), ,, /, :, ;, <, =, >, ?, @, [, \, ], {, })
  */
 const INVALID_COOKIE_NAME_CHARS_STRING =
   '\u0000-\u0020\u0022\u0028-\u0029\u002c\u002f\u003a-\u0040\u005c\u007b\u007d\u007f';
 const INVALID_COOKIE_NAME_CHARS = new RegExp(`[${INVALID_COOKIE_NAME_CHARS_STRING}]`);
 
 /**
- * Set-Cookieヘッダー文字列をパースしてSetCookieオブジェクトを生成します
+ * Parses a Set-Cookie header string and generates a SetCookie object
  *
- * @param setCookieHeader - Set-Cookieヘッダー文字列
- * @returns パースされたSetCookieオブジェクト
+ * @param setCookieHeader - Set-Cookie header string
+ * @returns Parsed SetCookie object
  *
  * @example
  * ```typescript
@@ -122,10 +122,10 @@ export const parseSetCookie = (setCookieHeader: string): SetCookie => {
 };
 
 /**
- * SetCookieオブジェクトをSet-Cookieヘッダー文字列にシリアライズします
+ * Serializes a SetCookie object into a Set-Cookie header string
  *
- * @param cookie - SetCookieオブジェクト
- * @returns Set-Cookieヘッダー文字列
+ * @param cookie - SetCookie object
+ * @returns Set-Cookie header string
  *
  * @example
  * ```typescript
@@ -176,11 +176,11 @@ export const serializeSetCookie = (cookie: SetCookie): string => {
 };
 
 /**
- * Cookieのドメインがリクエストドメインにマッチするか判定します（RFC 6265 Section 5.1.3準拠）
+ * Determines if a cookie's domain matches the request domain (RFC 6265 Section 5.1.3 compliant)
  *
- * @param cookie - SetCookieオブジェクト
- * @param requestDomain - リクエストドメイン
- * @returns マッチする場合はtrue
+ * @param cookie - SetCookie object
+ * @param requestDomain - Request domain
+ * @returns true if matched
  *
  * @example
  * ```typescript
@@ -213,11 +213,11 @@ export const matchesDomain = (cookie: SetCookie, requestDomain: string): boolean
 };
 
 /**
- * Cookieのパスがリクエストパスにマッチするか判定します（RFC 6265 Section 5.1.4準拠）
+ * Determines if a cookie's path matches the request path (RFC 6265 Section 5.1.4 compliant)
  *
- * @param cookie - SetCookieオブジェクト
- * @param requestPath - リクエストパス
- * @returns マッチする場合はtrue
+ * @param cookie - SetCookie object
+ * @param requestPath - Request path
+ * @returns true if matched
  *
  * @example
  * ```typescript
@@ -247,10 +247,10 @@ export const matchesPath = (cookie: SetCookie, requestPath: string): boolean => 
 };
 
 /**
- * Cookieが有効期限切れか判定します
+ * Determines if a cookie has expired
  *
- * @param cookie - SetCookieオブジェクト
- * @returns 有効期限切れの場合はtrue
+ * @param cookie - SetCookie object
+ * @returns true if expired
  *
  * @example
  * ```typescript
@@ -267,10 +267,10 @@ export const isExpired = (cookie: SetCookie): boolean => {
 };
 
 /**
- * CookieがRFC 6265に準拠しているか検証します
+ * Validates if a cookie conforms to RFC 6265
  *
- * @param cookie - SetCookieオブジェクト
- * @returns 有効な場合はtrue、無効な場合はエラーメッセージ
+ * @param cookie - SetCookie object
+ * @returns true if valid, error message if invalid
  *
  * @example
  * ```typescript

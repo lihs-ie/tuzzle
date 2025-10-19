@@ -1,6 +1,6 @@
 /**
- * CookieJar型定義と関数群
- * Cookie の保存・取得・削除を管理します
+ * CookieJar type definitions and functions
+ * Manages storage, retrieval, and deletion of cookies
  */
 
 import type { SetCookie } from './set.js';
@@ -8,7 +8,7 @@ import { isExpired, matchesDomain, matchesPath, parseSetCookie, validateSetCooki
 import type { HttpRequest, HttpResponse } from '../message/index.js';
 
 /**
- * CookieJar - Cookieの集合を管理する型
+ * CookieJar - Type for managing a collection of cookies
  */
 export interface CookieJar {
   readonly cookies: readonly SetCookie[];
@@ -21,11 +21,11 @@ export interface CookieJar {
 }
 
 /**
- * 新しいCookieJarを生成します
+ * Creates a new CookieJar
  *
- * @param options - オプション
- * @param options.strictMode - 無効なCookieを拒否するか（デフォルト: false）
- * @param options.cookies - 初期Cookieリスト（デフォルト: []）
+ * @param options - Options
+ * @param options.strictMode - Whether to reject invalid cookies (default: false)
+ * @param options.cookies - Initial cookie list (default: [])
  * @returns CookieJar
  *
  * @example

@@ -1,5 +1,5 @@
 /**
- * 使用可能な HTTP メソッドの集合
+ * Set of available HTTP methods
  */
 export const Method = {
   GET: 'GET',
